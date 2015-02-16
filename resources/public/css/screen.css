@@ -1,0 +1,97 @@
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+body {
+  margin: 0;
+  padding: 1em;
+  background: #EAEBDB;
+  color: #000000;
+  font-family: "Century Gothic",  /* Windows (HP printer) */ "Avant Garde Gothic",  /* HP font name */ "Avant Garde",  /* MacOS */ "URW Gothic L", /* Unix+X+FontConfig */ /* Fallback options */ helvetica,  /* Unix+X, MacOS */ sans-serif;
+}
+#menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #A4AA82;
+  color: #FFFFFF;
+  z-index: 50;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+  border-bottom: thin solid #F9F9FA;
+}
+#menu a, #menu a:link, #menu a:visited, #menu a:hover, #menu a:active {
+  padding: 0.2em 1em 0.2em 0;
+  display: inline-block;
+  color: #FFFFFF;
+  text-decoration: none;
+  outline: 0;
+}
+#menu a.title {
+  float: left;
+  padding: 0.2em 0 0.2em 1em;
+}
+div.w {
+  margin: 2em auto 1em;
+  padding : 0;
+  width: 60em;
+}
+div.c {
+  background: #F9F9FA;
+  margin: 0 auto 2em;
+  padding: 1em;
+  height: 20em;
+  box-shadow: 0 1px 3px #A4AA82;
+  border-top: thin solid #9BA99C;
+  -webkit-border-radius: 0.1em;
+  -moz-border-radius: 0.1em;
+  border-radius: 0.1em;
+  clear: both;
+}
+h1, h2 {
+  margin: 0 auto 1em;
+  padding: 0;
+}
+h1 {
+  color: #FFFFFF;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: 1px 1px 0 #9BA99C;
+}
+h1.main {
+  float: left;
+}
+span.h1-prefix {
+  float: left;
+  padding: 0 0.5em 0 0;
+  color: #9BA99C;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  letter-spacing: -0.25em;
+  text-shadow: 1px 1px 0 #FFFFFF;
+}
+h2 {
+  text-align: right;
+  color: #9BA99C;
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: 1px 1px 0 #FFFFFF;
+}
+form table {
+  border: 0;
+  margin: 0 auto;
+}
+form table th {
+  text-align: right;
+  font-weight: normal;
+  padding-right: 1em;
+}
+form table td.error {
+  color: red;
+}
