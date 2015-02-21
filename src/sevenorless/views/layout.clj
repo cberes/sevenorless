@@ -11,10 +11,12 @@
      (include-css "/css/screen.css")]
     [:body
      [:div#menu
-      (link-to {:class "title"} "/" (title))
       (link-to "/register" "Sign up")
-      (link-to "/login" "Log in")]
+      (link-to "/login" "Log in")
+      (link-to "/logout" "Log out")]
      [:div.w
-      [:span.h1-prefix "1 2 3 4 5 6"]
-      [:h1.main (title)]
+      [:h1.main (link-to "/" (title))]
       body]]))
+
+(defn simple [title & body]
+  (common [:h2 title] [:div.c body]))

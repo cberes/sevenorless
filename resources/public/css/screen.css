@@ -10,29 +10,48 @@ body {
   color: #000000;
   font-family: "Century Gothic",  /* Windows (HP printer) */ "Avant Garde Gothic",  /* HP font name */ "Avant Garde",  /* MacOS */ "URW Gothic L", /* Unix+X+FontConfig */ /* Fallback options */ helvetica,  /* Unix+X, MacOS */ sans-serif;
 }
+a {
+  outline;
+}
+img {
+  border: 0;
+}
 #menu {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  background: #A4AA82;
-  color: #FFFFFF;
+  background: transparent;
+  font-weight: bold;
+  color: #9BA99C;
+  text-shadow: 1px 1px 0 #F9F9FA;
   z-index: 50;
   margin: 0;
   padding: 0;
   text-align: right;
-  border-bottom: thin solid #F9F9FA;
 }
 #menu a, #menu a:link, #menu a:visited, #menu a:hover, #menu a:active {
-  padding: 0.2em 1em 0.2em 0;
+  padding: 0.2em 2em 0.2em 0;
   display: inline-block;
-  color: #FFFFFF;
+  font-weight: bold;
+  color: #9BA99C;
+  text-shadow: 1px 1px 0 #F9F9FA;
   text-decoration: none;
   outline: 0;
 }
 #menu a.title {
   float: left;
-  padding: 0.2em 0 0.2em 1em;
+  padding: 0.2em 0 0.2em 2em;
+}
+a.main, a.main:link, a.main:visited, a.main:hover, a.main:active {
+  float: left;
+  display: inline-block;
+  padding: 0 1em;
+  line-height: 2;
+  color: #9BA99C;
+  text-shadow: 1px 1px 0 #F9F9FA;
+  text-decoration: none;
+  outline: 0;
 }
 div.w {
   margin: 2em auto 1em;
@@ -56,7 +75,7 @@ h1, h2 {
   padding: 0;
 }
 h1 {
-  color: #FFFFFF;
+  color: #F9F9FA;
   font-size: 2em;
   font-weight: bold;
   line-height: 1;
@@ -64,6 +83,11 @@ h1 {
 }
 h1.main {
   float: left;
+}
+h1 a, h1 a:link, h1 a:visited, h1 a:hover, h1 a:active {
+  color: #F9F9FA;
+  text-shadow: 1px 1px 0 #9BA99C;
+  text-decoration: none;
 }
 span.h1-prefix {
   float: left;
@@ -73,7 +97,7 @@ span.h1-prefix {
   font-weight: bold;
   line-height: 1;
   letter-spacing: -0.25em;
-  text-shadow: 1px 1px 0 #FFFFFF;
+  text-shadow: 1px 1px 0 #F9F9FA;
 }
 h2 {
   text-align: right;
@@ -81,7 +105,7 @@ h2 {
   font-size: 2em;
   font-weight: bold;
   line-height: 1;
-  text-shadow: 1px 1px 0 #FFFFFF;
+  text-shadow: 1px 1px 0 #F9F9FA;
 }
 form table {
   border: 0;
