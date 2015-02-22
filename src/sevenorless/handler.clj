@@ -11,8 +11,10 @@
             [noir.util.middleware :refer [wrap-access-rules]]
             [noir.validation :refer [wrap-noir-validation]]
             [sevenorless.models.db :as db]
+            [sevenorless.models.user :as user]
             [sevenorless.routes.auth :refer [auth-routes]]
-            [sevenorless.routes.home :refer [home-routes]]))
+            [sevenorless.routes.home :refer [home-routes]]
+            [sevenorless.routes.user :refer [user-routes]]))
 
 (defn init []
   (println "sevenorless is starting"))
@@ -20,24 +22,19 @@
 (defn destroy []
   (println "sevenorless is shutting down"))
 
-(defn auto-login []
-  (when (nil? (session/get :user))
-    (let [user (db/get-remembered-user (cookies/get :remember))]
-      (when (not (nil? user)) (session/put! :user (:id user))))))
-
 (defn user-access [_]
-  (auto-login) ;; TODO why can't I add this as middleware?
-  (session/get :user))
+  (user/get-user))
 
 (defroutes app-routes
   (route/resources "/")
   (route/not-found "Not Found"))
 
 (def app
-  (-> (routes home-routes auth-routes app-routes)
+  (-> (routes home-routes user-routes auth-routes app-routes)
       (handler/site)
       (wrap-base-url)
-      (session/wrap-noir-session {:store (memory-store)})
-      (cookies/wrap-noir-cookies)
+      (wrap-access-rules [user-access])
       (wrap-noir-validation)
-      (wrap-access-rules [user-access])))
+      (user/wrap-user-login)
+      (session/wrap-noir-session {:store (memory-store)})
+      (cookies/wrap-noir-cookies)))

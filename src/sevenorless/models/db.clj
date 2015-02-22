@@ -100,5 +100,6 @@
 ;; returns the remembered user (or nil)
 ;; do not call if user is in session
 (defn get-remembered-user [cookie-value]
-  (let [{id 0, token 1} (str/split cookie-value #":" 2)]
-    (when (compare-user-token id token) (get-user id))))
+  (when (not (nil? cookie-value))
+	  (let [{id 0, token 1} (str/split cookie-value #":" 2)]
+	    (when (compare-user-token id token) (get-user id)))))
