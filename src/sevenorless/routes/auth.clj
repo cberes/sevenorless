@@ -27,6 +27,9 @@
 	            (control text-field :email "email" {:maxlength 2048})
 	            (control password-field :pass "password")
 	            (control password-field :pass1 "confirm password")
+              [:td {:colspan 3} "By creating an accout, you acknowledge that you have read and agree to our "
+                                (link-to "/policy" "terms of service")
+                                ". They're short, take a minute to read them."]
 	            [:tr [:th] [:td (submit-button "create account")] [:td]]])))
 
 (defn login-page []
@@ -48,6 +51,7 @@
 
 (defn password-reset-page [q]
   (layout/simple "Password reset"
+    [:p {:style "text-align: center;"} "Enter a new password."]
     (form-to [:post "/password-reset"]
              (hidden-field "secret" q) 
              [:table
@@ -77,7 +81,8 @@
 	  (if (errors? :pass :pass1)
 	    (password-reset-page secret)
 	    (do
-	     (db/update-user (:id user) {:pass (crypt/encrypt pass)})
+	     (db/update-user (:_id user) {:password (crypt/encrypt pass)})
+       (db/delete-password-reset-record user)
        ;; TODO tell user that password was reset?
 	     (redirect "/login")))))
 
@@ -116,7 +121,7 @@
   (if (errors? :username :email :pass :pass1)
     (registration-page)
     (do
-      (db/add-user {:username username :email email :pass (crypt/encrypt pass)})
+      (db/add-user {:username username :email email :password (crypt/encrypt pass)})
       ; TODO kind of stupid that we have to query for the user right away
       (let [user (db/find-user username)]
         (send-verify-email user (db/create-email-verify-record user))
@@ -129,7 +134,7 @@
           [:username "username is required"])
     (rule (has-value? pass)
           [:pass "password is required"])
-    (rule (and user (crypt/compare pass (:pass user)))
+    (rule (and user (crypt/compare pass (:password user)))
           [:pass "invalid password"])
     (if (errors? :username :pass)
       (login-page)

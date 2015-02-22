@@ -14,6 +14,7 @@
             [sevenorless.models.user :as user]
             [sevenorless.routes.auth :refer [auth-routes]]
             [sevenorless.routes.home :refer [home-routes]]
+            [sevenorless.routes.policy :refer [policy-routes]]
             [sevenorless.routes.user :refer [user-routes]]))
 
 (defn init []
@@ -30,7 +31,7 @@
   (route/not-found "Not Found"))
 
 (def app
-  (-> (routes home-routes user-routes auth-routes app-routes)
+  (-> (routes home-routes policy-routes user-routes auth-routes app-routes)
       (handler/site)
       (wrap-base-url)
       (wrap-access-rules [user-access])

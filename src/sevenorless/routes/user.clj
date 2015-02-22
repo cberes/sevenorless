@@ -5,59 +5,64 @@
             [sevenorless.models.db :as db]
             [sevenorless.models.user :as user]))
 
-(defn profile-details [user logged-in-user]
-  [:h2 (:username user)]
-  [:div.c "TODO"])
+(defn format-date [date]
+  (.format (java.text.SimpleDateFormat. "MMMM dd, yyyy") date))
 
-(defn profile-publish [user logged-in-user]
-  (when (= (:id user) (:id logged-in-user))
-	  [:h2 "Publish"]
-	  [:div.c "TODO"]))
+(defn profile-details [logged-in-user user]
+  (list
+    [:h2 (:username user)]
+	  [:div.c
+	   [:table
+	    [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td 0]]
+	    [:tr [:th "Joined"] [:td (format-date (:created user))] [:th "Follows"] [:td 0]]]]))
+
+(defn profile-publish [logged-in-user user]
+  (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
+	  (list
+     [:h2 "Publish"]
+     [:div.c "TODO"])))
 
 ; TODO 
-(defn profile-feed [user logged-in-user]
-  [:h2 "Today"]
-  [:div.c " "]
-  [:div.c " "]
-  [:div.c " "])
+(defn profile-feed [logged-in-user user]
+  (list
+    [:h2 "Today"]
+	  [:div.c " "]
+	  [:div.c " "]
+	  [:div.c " "]))
 
-(defn profile [username]
-  (let [user (db/find-user username) logged-in (user/get-user)]
+(defn profile [logged-in-user username]
+  (let [user (db/find-user username)]
 	  (layout/common
-	    (profile-details user logged-in)
-	    (profile-publish user logged-in)
-	    (profile-feed user logged-in))))
-
-; TODO
-(defn feed [username]
-  (let [user (db/find-user username) logged-in (user/get-user)]
-	  (layout/common
-	    [:h2 "Today"]
-		  [:div.c " "]
-		  [:div.c " "]
-		  [:div.c " "])))
+	    (profile-details logged-in-user user)
+	    (profile-publish logged-in-user user)
+	    (profile-feed logged-in-user user))))
 
 ; TODO
-(defn follows [username]
-  (let [user (db/find-user username) logged-in (user/get-user)]
-	  (layout/common
-	    [:h2 "Today"]
-		  [:div.c " "]
-		  [:div.c " "]
-		  [:div.c " "])))
+(defn feed [user]
+  (layout/common
+    [:h2 "Today"]
+	  [:div.c " "]
+	  [:div.c " "]
+	  [:div.c " "]))
 
 ; TODO
-(defn settings [username]
-  (let [user (db/find-user username) logged-in (user/get-user)]
-	  (layout/common
-	    [:h2 "Today"]
-		  [:div.c " "]
-		  [:div.c " "]
-		  [:div.c " "])))
+(defn follows [user]
+  (layout/common
+    [:h2 "Today"]
+	  [:div.c " "]
+	  [:div.c " "]
+	  [:div.c " "]))
+
+; TODO
+(defn settings [user]
+  (layout/common
+    [:h2 "Today"]
+	  [:div.c " "]
+	  [:div.c " "]
+	  [:div.c " "]))
 
 (defroutes user-routes
-  (context "/u/:username" [username]
-	  (GET "/" [] (profile username))
-	  (GET "/feed" [] (feed username))
-	  (GET "/follows" [] (follows username))
-	  (GET "/settings" [] (settings username))))
+  (GET "/u/:username" [username] (profile (user/get-user) username))
+  (GET "/feed" [] (feed (user/get-user)))
+  (GET "/follows" [] (follows (user/get-user)))
+  (GET "/settings" [] (settings (user/get-user))))

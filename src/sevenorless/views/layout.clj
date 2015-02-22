@@ -8,7 +8,7 @@
 (defn menu []
   (if-let [user (user/get-user)]
     (list
-      (link-to (str "/u/" (:username user) "/feed") "My feed")
+      (link-to "/feed" "My feed")
       (link-to (str "/u/" (:username user)) "Profile")
       (link-to "/logout" "Log out"))
     (list
