@@ -1,5 +1,5 @@
 (ns sevenorless.views.layout
-  (:require [hiccup.page :refer [html5 include-css]]
+  (:require [hiccup.page :refer [html5 include-css include-js]]
             [hiccup.element :refer [link-to]]
             [sevenorless.models.user :as user]))
 
@@ -19,7 +19,9 @@
   (html5
     [:head
      [:title (title)]
-     (include-css "/css/screen.css")]
+     (include-css "/css/screen.css")
+     (include-js "/js/jquery-2.1.3.min.js")
+     (include-js "/js/follow.js")]
     [:body
      [:div#menu (menu)]
      [:div.w

@@ -30,6 +30,11 @@
     ["select * from web_user where _id = ?" id]
     :result-set-fn first))
 
+(defn get-follows [id]
+  (sql/query db
+    ["select u._id, u.username, f.created from web_user u join follow f on f.followed_id = u._id where f.user_id = ? order by u.username" id]
+    :result-set-fn doall))
+
 (defn find-user [username]
   (sql/query db
     ["select * from web_user where username = ?" username]
@@ -103,3 +108,26 @@
   (when (not (nil? cookie-value))
 	  (let [{id 0, token 1} (str/split cookie-value #":" 2) id (Integer/parseInt id)]
 	    (when (compare-user-token id token) (get-user id)))))
+
+(defn followers-count [id]
+  (sql/query db
+    ["select COALESCE(count(*), 0) as count from follow where followed_id = ?" id]
+    :result-set-fn first))
+
+(defn following-count [id]
+  (sql/query db
+    ["select COALESCE(count(*), 0) as count from follow where user_id = ?" id]
+    :result-set-fn first))
+
+(defn following? [id other-id]
+  (sql/query db
+    ["select u._id, u.username, f.created from web_user u join follow f on f.followed_id = u._id where f.user_id = ? and f.followed_id = ?" id other-id]
+    :result-set-fn first))
+
+(defn follow [id other-id]
+  (when (and (not= id other-id) (not (following? id other-id)))
+    (sql/insert! db :follow {:user_id id :followed_id other-id})))
+
+(defn unfollow [id other-id]
+  (when (not= id other-id)
+    (sql/delete! db :follow ["user_id = ? and followed_id = ?" id other-id])))
