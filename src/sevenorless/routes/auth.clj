@@ -10,6 +10,9 @@
             [sevenorless.views.layout :as layout]
             [sevenorless.models.db :as db]))
 
+;; 2 weeks (in seconds)
+(def cookie-max-age (* 14 86400))
+
 (defn format-error [[error]]
   [:p.error error])
 
@@ -139,7 +142,7 @@
     (if (errors? :username :pass)
       (login-page)
       (do
-       (when remember (cookies/put! :remember (db/remember-user user)))
+       (when remember (cookies/put! :remember {:value (db/remember-user user) :max-age cookie-max-age}))
        (session/put! :user (:_id user))
        (redirect "/")))))
 
@@ -161,7 +164,8 @@
        (layout/simple "Log out"
         (form-to [:post "/logout"]
                  (submit-button "logout"))))
-  (POST "/logout" [id pass]
+  (POST "/logout" []
+        (cookies/put! :remember {:value "" :max-age 0})
         (session/clear!)
         (redirect "/"))
   (GET "/forgot-password" [] (forgot-password-page))

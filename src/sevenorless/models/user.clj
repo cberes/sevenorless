@@ -3,16 +3,18 @@
             [noir.session :as session]
             [sevenorless.models.db :as db]))
 
-(def ^:dynamic current-user (atom nil))
+(def current-user (atom nil))
 
 (defn get-user []
   (deref current-user))
 
 (defn wrap-user-login [handler]
   (fn [request]
-	  (if-let [id (session/get :user)]
-	    (reset! current-user (db/get-user id))
-	    (when-let [user (db/get-remembered-user (cookies/get :remember))]
-	      (session/put! :user (:_id user))
-	      (reset! current-user user)))
+    (if-let [id (session/get :user)]
+       (reset! current-user (db/get-user id))
+       (if-let [user (db/get-remembered-user (cookies/get :remember))]
+          (do
+            (session/put! :user (:_id user))
+            (reset! current-user user))
+          (reset! current-user nil)))
     (handler request)))
