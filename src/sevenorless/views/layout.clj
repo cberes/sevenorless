@@ -20,8 +20,11 @@
     [:head
      [:title (title)]
      (include-css "/css/screen.css")
+     (include-js "/js/tinymce/tinymce.min.js")
      (include-js "/js/jquery-2.1.3.min.js")
-     (include-js "/js/follow.js")]
+     (include-js "/js/tinymce-ext.js")
+     (include-js "/js/follow.js")
+     [:script "tinymce.init({ selector: \"textarea\" });"]]
     [:body
      [:div#menu (menu)]
      [:div.w

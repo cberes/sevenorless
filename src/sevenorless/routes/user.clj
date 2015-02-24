@@ -35,7 +35,7 @@
 (defn post-count-message [id]
   (let [count (:count (db/daily-items-count id)) remaining (- 7 count)]
     (if (= remaining 0)
-      "You used all your items today!"
+      "You used all your items today! If you create another item today, it will be saved as a draft."
       (str "You can post " remaining " more item" (when (not= remaining 1) "s") " today."))))
 
 (defn profile-publish [logged-in-user user]
@@ -44,17 +44,25 @@
       [:h2 "Publish"]
       [:div.c
        [:p (post-count-message (:_id user))]
+       [:p "You can enter a title, body, link, and/or image. Each field is optional, but you need to enter at least one."]
        (form-to {:id "publish" :enctype "multipart/form-data"} [:post "/publish"]
                 [:p
                  (label :title "Title")
                  [:br]
                  (text-field {:maxlength 256} :title)]
+                [:p.right
+                 (label :raw "Raw HTML editor")
+                 (check-box {:onchange "toggleTinyMce(this, 'body');"} :raw)]
                 [:p
                  (label :body "Body")
                  [:br]
                  (text-area {:maxlength 4096} :body)]
                 [:p
-                 (label :image "Image (optional)")
+                 (label :link "Link")
+                 [:br]
+                 (text-field {:maxlength 2048} :link)]
+                [:p
+                 (label :image "Image")
                  (file-upload :image)
                  (submit-button "Post")])])))
 

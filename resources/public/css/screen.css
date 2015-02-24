@@ -109,6 +109,13 @@ h2 {
 form label {
   padding-right: 1em;
 }
+form .right {
+  float: right;
+  margin: 0;
+}
+form .right label {
+  padding-right: 0.5em;
+}
 form table {
   border: 0;
   margin: 0 auto;
