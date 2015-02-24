@@ -1,7 +1,7 @@
 (ns sevenorless.routes.auth
   (:require [compojure.core :refer [defroutes GET POST]]
-            [hiccup.form :refer [form-to label text-field password-field hidden-field check-box submit-button]]
             [hiccup.element :refer [link-to]]
+            [hiccup.form :refer [form-to label text-field password-field hidden-field check-box submit-button]]
             [noir.cookies :as cookies]
             [noir.response :refer [redirect]]
             [noir.session :as session]
@@ -26,31 +26,31 @@
   (layout/simple "Sign up"
 	  (form-to [:post "/register"]
 	           [:table
-	            (control text-field :username "username" {:maxlength 20})
-	            (control text-field :email "email" {:maxlength 2048})
-	            (control password-field :pass "password")
-	            (control password-field :pass1 "confirm password")
+	            (control text-field :username "Username" {:maxlength 20})
+	            (control text-field :email "Email" {:maxlength 2048})
+	            (control password-field :pass "Password")
+	            (control password-field :pass1 "Confirm password")
               [:td {:colspan 3} "By creating an accout, you acknowledge that you have read and agree to our "
                                 (link-to "/policy" "terms of service")
                                 ". They're short, take a minute to read them."]
-	            [:tr [:th] [:td (submit-button "create account")] [:td]]])))
+	            [:tr [:th] [:td (submit-button "Create account")] [:td]]])))
 
 (defn login-page []
   (layout/simple "Log in"
     (form-to [:post "/login"]
              [:table
-              (control text-field :username "username" {:maxlength 20})
-              (control password-field :pass "password")
-              (control check-box :remember "remember me")
-              [:tr [:th] [:td (submit-button "login")] [:td]]])
+              (control text-field :username "Username" {:maxlength 20})
+              (control password-field :pass "Password")
+              (control check-box :remember "Remember me")
+              [:tr [:th] [:td (submit-button "Log in")] [:td]]])
     [:p {:style "text-align: center;"} (link-to "/forgot-password" "Forgot your password?")]))
 
 (defn forgot-password-page []
   (layout/simple "Password reset"
     (form-to [:post "/forgot-password"]
              [:table
-              (control text-field :id "password or email" {:maxlength 2048})
-              [:tr [:th] [:td (submit-button "submit")] [:td]]])))
+              (control text-field :id "Password or email" {:maxlength 2048})
+              [:tr [:th] [:td (submit-button "Submit")] [:td]]])))
 
 (defn password-reset-page [q]
   (layout/simple "Password reset"
@@ -58,9 +58,9 @@
     (form-to [:post "/password-reset"]
              (hidden-field "secret" q) 
              [:table
-	            (control password-field :pass "password")
-	            (control password-field :pass1 "confirm password")
-              [:tr [:th] [:td (submit-button "change password")] [:td]]])))
+	            (control password-field :pass "Password")
+	            (control password-field :pass1 "Confirm password")
+              [:tr [:th] [:td (submit-button "Change password")] [:td]]])))
 
 ;; TODO
 (defn send-password-reset-email [user token]
@@ -162,8 +162,9 @@
         (handle-login username pass remember))
   (GET "/logout" []
        (layout/simple "Log out"
+        [:p "Click the button to log out."]
         (form-to [:post "/logout"]
-                 (submit-button "logout"))))
+                 (submit-button "Log out"))))
   (POST "/logout" []
         (cookies/put! :remember {:value "" :max-age 0})
         (session/clear!)

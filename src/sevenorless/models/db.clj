@@ -131,3 +131,8 @@
 (defn unfollow [id other-id]
   (when (not= id other-id)
     (sql/delete! db :follow ["user_id = ? and followed_id = ?" id other-id])))
+
+(defn daily-items-count [id]
+  (sql/query db
+    ["select COALESCE(count(*), 0) as count from item where user_id = ? and created >= CURRENT_DATE" id]
+    :result-set-fn first))

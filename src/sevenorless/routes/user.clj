@@ -1,7 +1,9 @@
 (ns sevenorless.routes.user
   (:require [compojure.core :refer :all]
             [hiccup.element :refer [link-to]]
+            [hiccup.form :refer [form-to label text-area text-field file-upload hidden-field check-box submit-button]]
             [noir.session :as session]
+            [noir.util.route :refer [restricted]]
             [sevenorless.views.layout :as layout]
             [sevenorless.models.db :as db]
             [sevenorless.models.user :as user]))
@@ -30,11 +32,34 @@
 	    [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (:count (db/followers-count (:_id user)))]]
 	    [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (:count (db/following-count (:_id user)))]]]]))
 
+(defn post-count-message [id]
+  (let [count (:count (db/daily-items-count id)) remaining (- 7 count)]
+    (if (= remaining 0)
+      "You used all your items today!"
+      (str "You can post " remaining " more item" (when (not= remaining 1) "s") " today."))))
+
 (defn profile-publish [logged-in-user user]
   (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
-	  (list
-     [:h2 "Publish"]
-     [:div.c "TODO"])))
+    (list
+      [:h2 "Publish"]
+      [:div.c
+       [:p (post-count-message (:_id user))]
+       (form-to {:id "publish" :enctype "multipart/form-data"} [:post "/publish"]
+                [:p
+                 (label :title "Title")
+                 [:br]
+                 (text-field {:maxlength 256} :title)]
+                [:p
+                 (label :body "Body")
+                 [:br]
+                 (text-area {:maxlength 4096} :body)]
+                [:p
+                 (label :image "Image (optional)")
+                 (file-upload :image)
+                 (submit-button "Post")])])))
+
+(defn publish [user]
+  (println user))
 
 ; TODO 
 (defn profile-feed [logged-in-user user]
@@ -46,10 +71,10 @@
 
 (defn profile [logged-in-user username]
   (let [user (db/find-user username)]
-	  (layout/common
-	    (profile-details logged-in-user user)
-	    (profile-publish logged-in-user user)
-	    (profile-feed logged-in-user user))))
+    (layout/common
+      (profile-details logged-in-user user)
+      (profile-publish logged-in-user user)
+      (profile-feed logged-in-user user))))
 
 ; TODO
 (defn feed [user]
@@ -60,9 +85,10 @@
 	  [:div.c " "]))
 
 (defn format-follow [f]
-  [:tr [:td (:username f)]
-       [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
-       [:td (follow-link (:username f) true)]])
+  (let [username (:username f)]
+    [:tr [:td (link-to (str "/u/" username) username)]
+         [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
+         [:td (follow-link username true)]]))
 
 (defn following [user]
   (let [title "Following" records (db/get-follows (:_id user))]
@@ -74,21 +100,22 @@
 (defn settings [user]
   (layout/common
     [:h2 "Today"]
-	  [:div.c " "]
-	  [:div.c " "]
-	  [:div.c " "]))
+    [:div.c " "]
+    [:div.c " "]
+    [:div.c " "]))
 
 (defn follow [logged-in-user username follow?]
   (let [user (db/find-user username)]
-	  (if follow?
-     (db/follow (:_id logged-in-user) (:_id user))
-     (db/unfollow (:_id logged-in-user) (:_id user)))))
+    (if follow?
+      (db/follow (:_id logged-in-user) (:_id user))
+      (db/unfollow (:_id logged-in-user) (:_id user)))))
 
 (defroutes user-routes
   (context "/u/:username" [username]
-	  (GET "/" [] (profile (user/get-user) username))
-	  (POST "/follow" [] (follow (user/get-user) username true))
-	  (POST "/unfollow" [] (follow (user/get-user) username false)))
-  (GET "/feed" [] (feed (user/get-user)))
-  (GET "/following" [] (following (user/get-user)))
-  (GET "/settings" [] (settings (user/get-user))))
+    (GET "/" [] (profile (user/get-user) username))
+    (POST "/follow" [] (restricted (follow (user/get-user) username true)))
+    (POST "/unfollow" [] (restricted (follow (user/get-user) username false))))
+  (POST "/publish" [] (restricted (publish (user/get-user))))
+  (GET "/feed" [] (restricted (feed (user/get-user))))
+  (GET "/following" [] (restricted (following (user/get-user))))
+  (GET "/settings" [] (restricted (settings (user/get-user)))))

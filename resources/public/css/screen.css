@@ -62,7 +62,6 @@ div.c {
   background: #F9F9FA;
   margin: 0 auto 2em;
   padding: 1em;
-  height: 20em;
   box-shadow: 0 1px 3px #A4AA82;
   border-top: thin solid #9BA99C;
   -webkit-border-radius: 0.1em;
@@ -107,6 +106,9 @@ h2 {
   line-height: 1;
   text-shadow: 1px 1px 0 #F9F9FA;
 }
+form label {
+  padding-right: 1em;
+}
 form table {
   border: 0;
   margin: 0 auto;
@@ -114,8 +116,16 @@ form table {
 form table th {
   text-align: right;
   font-weight: normal;
-  padding-right: 1em;
 }
 form table td.error {
   color: red;
+}
+form#publish input[type=text], form#publish textarea {
+  width: 100%;
+}
+form#publish textarea {
+  height: 15em;
+}
+form#publish input[type=submit] {
+  float: right;
 }
