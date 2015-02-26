@@ -136,3 +136,14 @@
   (sql/query db
     ["select COALESCE(count(*), 0) as count from item where user_id = ? and created >= CURRENT_DATE" id]
     :result-set-fn first))
+
+(defn add-image [image]
+  (sql/insert! db :image image))
+
+(defn get-image [id]
+  (sql/query db
+    ["select * from image where _id = ?" id]
+    :result-set-fn first))
+
+(defn add-item [item]
+  (sql/insert! db :item item))

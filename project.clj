@@ -2,13 +2,14 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [compojure "1.1.6"]
+                 [compojure "1.3.2"]
                  [hiccup "1.0.5"]
                  [lib-noir "0.9.5"]
                  [ring-server "0.3.1"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]
                  [org.clojure/java.jdbc "0.3.6"]
-                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]]
+                 [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
+                 [net.tanesha.recaptcha4j/recaptcha4j "0.0.8"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler sevenorless.handler/app
          :init sevenorless.handler/init

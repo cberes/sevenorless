@@ -6,9 +6,11 @@
             [noir.response :refer [redirect]]
             [noir.session :as session]
             [noir.util.crypt :as crypt]
+            [noir.util.route :refer [restricted]]
             [noir.validation :refer [rule errors? has-value? is-email? matches-regex? not-nil? on-error]]
             [sevenorless.views.layout :as layout]
-            [sevenorless.models.db :as db]))
+            [sevenorless.models.db :as db]
+            [sevenorless.models.user :as user]))
 
 ;; 2 weeks (in seconds)
 (def cookie-max-age (* 14 86400))
@@ -30,7 +32,7 @@
 	            (control text-field :email "Email" {:maxlength 2048})
 	            (control password-field :pass "Password")
 	            (control password-field :pass1 "Confirm password")
-              [:td {:colspan 3} "By creating an accout, you acknowledge that you have read and agree to our "
+              [:td {:colspan 3} "By creating an account, you acknowledge that you have read and agree to our "
                                 (link-to "/policy" "terms of service")
                                 ". They're short, take a minute to read them."]
 	            [:tr [:th] [:td (submit-button "Create account")] [:td]]])))
@@ -152,29 +154,32 @@
 	    (layout/simple title [:p "Success! Your email address was verified."])
 	    (layout/simple title [:p "Uh oh, we could not verify your email address. Is it already verified?"]))))
 
+(defmacro enforce-logged-out [& body]
+  `(if-not (nil? (user/get-user)) (redirect "/") (do ~@body)))
+
 ;; underscore indicates that an argument is ignored
 (defroutes auth-routes
-  (GET "/register" [_] (registration-page))
+  (GET "/register" [_] (enforce-logged-out (registration-page)))
   (POST "/register" [username email pass pass1]
-        (handle-registration username email pass pass1))
-  (GET "/login" [] (login-page))
+        (enforce-logged-out (handle-registration username email pass pass1)))
+  (GET "/login" [] (enforce-logged-out (login-page)))
   (POST "/login" [username pass remember]
-        (handle-login username pass remember))
+        (enforce-logged-out (handle-login username pass remember)))
   (GET "/logout" []
-       (layout/simple "Log out"
-        [:p "Click the button to log out."]
-        (form-to [:post "/logout"]
-                 (submit-button "Log out"))))
+       (restricted (layout/simple "Log out"
+                    [:p "Click the button to log out."]
+                    (form-to [:post "/logout"]
+                             (submit-button "Log out")))))
   (POST "/logout" []
-        (cookies/put! :remember {:value "" :max-age 0})
-        (session/clear!)
-        (redirect "/"))
-  (GET "/forgot-password" [] (forgot-password-page))
+        (restricted (cookies/put! :remember {:value "" :max-age 0})
+                    (session/clear!)
+                    (redirect "/")))
+  (GET "/forgot-password" [] (enforce-logged-out (forgot-password-page)))
   (POST "/forgot-password" [id]
-        (handle-password-reset-request id))
-  (GET "/password-reset" [q] (password-reset-page q))
+        (enforce-logged-out (handle-password-reset-request id)))
+  (GET "/password-reset" [q] (enforce-logged-out (password-reset-page q)))
   (POST "/password-reset" [secret pass pass1]
-        (handle-password-reset secret pass pass1))
+        (enforce-logged-out (handle-password-reset secret pass pass1)))
   (GET "/verify-email" [q] (handle-email-verify q))
   )
 

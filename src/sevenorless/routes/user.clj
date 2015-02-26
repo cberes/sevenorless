@@ -1,12 +1,19 @@
 (ns sevenorless.routes.user
-  (:require [compojure.core :refer :all]
-            [hiccup.element :refer [link-to]]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as string]
+            [compojure.core :refer :all]
+            [hiccup.element :refer [image link-to]]
             [hiccup.form :refer [form-to label text-area text-field file-upload hidden-field check-box submit-button]]
+            [hiccup.util :refer [url-encode]]
+            [noir.io :refer [upload-file resource-path]]
+            [noir.response :refer [redirect]]
             [noir.session :as session]
             [noir.util.route :refer [restricted]]
             [sevenorless.views.layout :as layout]
             [sevenorless.models.db :as db]
-            [sevenorless.models.user :as user]))
+            [sevenorless.models.item :as item]
+            [sevenorless.models.user :as user])
+  (:import [java.io File]))
 
 (defn format-date [date]
   (.format (java.text.SimpleDateFormat. "MMMM dd, yyyy") date))
@@ -62,12 +69,26 @@
                  [:br]
                  (text-field {:maxlength 2048} :link)]
                 [:p
-                 (label :image "Image")
-                 (file-upload :image)
+                 (label :img "Image")
+                 (file-upload :img)
                  (submit-button "Post")])])))
 
-(defn publish [user]
-  (println user))
+(defn save-image [{:keys [content-type filename] :as file} user]
+  (when-not (empty? filename)
+    (let [new-file-name (item/image-file-name user content-type) folder (item/image-store-path)]
+      (try
+        (upload-file folder (assoc file :filename new-file-name) :create-path? true)
+        (:_id (first (db/add-image {:user_id (:_id user) :path new-file-name})))
+        (catch Exception ex
+          (println (str "error uploading file: " (.getMessage ex))))))))
+
+(defn publish [user title body link file]
+  (db/add-item {:user_id (:_id user)
+                :image_id (save-image file user)
+                :title (if (string/blank? title) nil title)
+                :body (if (string/blank? body) nil body)
+                :link (if (string/blank? link) nil link)})
+  (redirect (str "/u/" (:username user))))
 
 ; TODO 
 (defn profile-feed [logged-in-user user]
@@ -123,7 +144,7 @@
     (GET "/" [] (profile (user/get-user) username))
     (POST "/follow" [] (restricted (follow (user/get-user) username true)))
     (POST "/unfollow" [] (restricted (follow (user/get-user) username false))))
-  (POST "/publish" [] (restricted (publish (user/get-user))))
+  (POST "/publish" [title body link img] (restricted (publish (user/get-user) title body link img)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user))))
   (GET "/settings" [] (restricted (settings (user/get-user)))))
