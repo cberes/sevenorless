@@ -92,11 +92,7 @@
 
 ; TODO 
 (defn profile-feed [logged-in-user user]
-  (list
-    [:h2 "Today"]
-	  [:div.c " "]
-	  [:div.c " "]
-	  [:div.c " "]))
+  (map item/format-item (db/get-users-items (:_id user) 0 100)))
 
 (defn profile [logged-in-user username]
   (let [user (db/find-user username)]
@@ -105,13 +101,9 @@
       (profile-publish logged-in-user user)
       (profile-feed logged-in-user user))))
 
-; TODO
 (defn feed [user]
   (layout/common
-    [:h2 "Today"]
-	  [:div.c " "]
-	  [:div.c " "]
-	  [:div.c " "]))
+    (map item/format-item (db/get-follows-items (:_id user) 0 100))))
 
 (defn format-follow [f]
   (let [username (:username f)]

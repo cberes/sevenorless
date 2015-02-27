@@ -1,20 +1,12 @@
 (ns sevenorless.routes.home
   (:require [compojure.core :refer :all]
-            [sevenorless.views.layout :as layout]))
+            [sevenorless.views.layout :as layout]
+            [sevenorless.models.db :as db]
+            [sevenorless.models.item :as item]))
 
 (defn home []
   (layout/common
-    [:h2 "Today"]
-    [:div.c " "]
-    [:div.c " "]
-    [:h2 "Yesterday"]
-    [:div.c " "]
-    [:div.c " "]
-    [:div.c " "]
-    [:h2 "Last week"]
-    [:div.c " "]
-    [:div.c " "]
-    [:div.c " "]))
+    (map item/format-item (db/get-items 0 100))))
 
 (defroutes home-routes
   (GET "/" [] (home)))

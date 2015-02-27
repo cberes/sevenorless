@@ -147,3 +147,29 @@
 
 (defn add-item [item]
   (sql/insert! db :item item))
+
+(defn get-items [offset limit]
+  (sql/query db
+    ["select i.*, u.* from item i
+      join web_user u on i.user_id = u._id
+      left outer join user_privacy p on p.user_id = u._id
+      where i.public and (p.items is null or p.items)
+      order by i.created desc, i._id asc"]
+    :result-set-fn doall))
+
+(defn get-follows-items [user-id offset limit]
+  (sql/query db
+    ["select i.*, u.* from item i
+      join web_user u on i.user_id = u._id
+      join follow f on f.followed_id = u._id
+      where f.user_id = ?
+      order by i.created desc, i._id asc" user-id]
+    :result-set-fn doall))
+
+(defn get-users-items [user-id offset limit]
+  (sql/query db
+    ["select i.*, u.* from item i
+      join web_user u on i.user_id = u._id
+      where u._id = ?
+      order by i.created desc, i._id asc" user-id]
+    :result-set-fn doall))
