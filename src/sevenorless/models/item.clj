@@ -38,4 +38,4 @@
    [:div.u
     (link-to (str "/u/" (:username item)) (:username item))
     (link-to (str "/u/" (:username item)) (image (if-not (nil? (:user_image_id item)) (str "/img/" (:user_image_id item) ".jpg") "/img/anon.png")))
-    [:div {:style "clear: both; height: 0; width: 0;"}]]])
+    [:div.clear]]])

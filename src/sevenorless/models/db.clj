@@ -25,9 +25,16 @@
 (defn update-user [id updates]
   (sql/update! db :web_user updates ["_id = ?" id]))
 
+(defn get-user-bio [id]
+  (sql/query db
+    ["select bio from user_bio where user_id = ?" id]
+    :result-set-fn first))
+
 (defn get-user [id]
   (sql/query db
-    ["select * from web_user where _id = ?" id]
+    ["select u.*, p.image_id from web_user u
+      left outer join user_portrait p on u._id = p.user_id
+      where u._id = ?" id]
     :result-set-fn first))
 
 (defn get-follows [id]
@@ -37,12 +44,16 @@
 
 (defn find-user [username]
   (sql/query db
-    ["select * from web_user where username = ?" username]
+    ["select u.*, p.image_id from web_user u
+      left outer join user_portrait p on u._id = p.user_id
+      where u.username = ?" username]
     :result-set-fn first))
 
 (defn find-user-by-email [email]
   (sql/query db
-    ["select * from web_user where email = ?" email]
+    ["select u.*, p.image_id from web_user u
+      left outer join user_portrait p on u._id = p.user_id
+      where u.email = ?" email]
     :result-set-fn first))
 
 (defn compare-user-token [id token]

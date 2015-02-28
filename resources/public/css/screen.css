@@ -177,3 +177,19 @@ form#publish textarea {
 form#publish input[type=submit] {
   float: right;
 }
+img#portrait {
+  float: left;
+  width: 33%;
+  max-width: 500px;
+}
+table#profile, div#profile-bio {
+  width: 66%;
+}
+table#profile th, table#profile td {
+  text-align: right;
+}
+.clear {
+  clear: both;
+  height: 0;
+  width: 0;
+}
