@@ -1,5 +1,6 @@
 (ns sevenorless.models.item
-  (:require [hiccup.element :refer [image link-to]]
+  (:require [clojure.string :as string]
+            [hiccup.element :refer [image link-to]]
             [noir.cookies :as cookies]
             [noir.session :as session]
             [sevenorless.models.db :as db]))
@@ -20,15 +21,21 @@
 (defn build-title [{:keys [link title]}]
   (if (nil? link)
     (if (nil? title) nil [:h3 title])
-    (link-to link [:h3 (if (nil? title) link title)])))
+    [:h3 (link-to link (if (nil? title) link title))]))
 
-(defn build-image [{:keys [image_id]}]
+(defn build-image [{:keys [image_id user_image_id]}]
   (when-not (nil? image_id)
-    (image {:style "width: 100%;"} (str "/img/" image_id ".jpg"))))
+    (image {:class "b"} (str "/img/" image_id ".jpg"))))
+
+(defn build-body [title body]
+  (when-not (and (nil? title) (string/blank? body))
+    [:div.b title body]))
 
 (defn format-item [item]
-  [:div.c
+  [:div.i
    (build-image item)
-   (build-title item)
-   (:body item)
-   [:p (:username item)]])
+   (build-body (build-title item) (:body item))
+   [:div.u
+    (link-to (str "/u/" (:username item)) (:username item))
+    (link-to (str "/u/" (:username item)) (image (if-not (nil? (:user_image_id item)) (str "/img/" (:user_image_id item) ".jpg") "/img/anon.png")))
+    [:div {:style "clear: both; height: 0; width: 0;"}]]])

@@ -58,18 +58,59 @@ div.w {
   padding : 0;
   width: 60em;
 }
-div.c {
+div.c, div.i {
   background: #F9F9FA;
   margin: 0 auto 2em;
-  padding: 1em;
   box-shadow: 0 1px 3px #A4AA82;
-  border-top: thin solid #9BA99C;
   -webkit-border-radius: 0.1em;
   -moz-border-radius: 0.1em;
-  border-radius: 0.1em;
+  border-radius: 0.25em;
   clear: both;
 }
-h1, h2 {
+div.c {
+  padding: 1em;
+}
+div.i {
+  padding: 0;
+  line-height: 1;
+}
+div.i img.b {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  border-top-left-radius: 0.25em;
+  border-top-right-radius: 0.25em;
+}
+div.i div.b, div.i div.u {
+  padding: 1em;
+  margin: 0;
+  border: 0;
+  color: #A4AA82;
+  line-height: 1.5
+}
+div.i div.u {
+  background: #A4AA82;
+  color: #F9F9FA;
+}
+div.i div.u a, div.i div.u a:link, div.i div.u a:visited, div.i div.u a:hover, div.i div.u a:active {
+  color: #F9F9FA;
+  text-decoration: none;
+}
+div.i div.u a img {
+  float: right;
+  width: 100px;
+  height: 100px;
+  border-radius: 0.25em;
+}
+div.i h3 {
+  color: #A4AA82;
+  font-size: 1.5em;
+}
+div.i h3 a, div.i h3 a:link, div.i h3 a:visited, div.i h3 a:hover, div.i h3 a:active {
+  color: #A4AA82;
+  text-decoration: none;
+}
+h1, h2, h3 {
   margin: 0 auto 1em;
   padding: 0;
 }
