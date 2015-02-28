@@ -51,8 +51,11 @@
       "You used all your items today! If you create another item today, it will be saved as a draft."
       (str "You can post " remaining " more item" (when (not= remaining 1) "s") " today."))))
 
+(defn own-profile? [logged-in-user user]
+  (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user))))
+
 (defn profile-publish [logged-in-user user]
-  (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
+  (when (own-profile? logged-in-user user)
     (list
       [:h2 "Publish"]
       [:div.c
@@ -87,8 +90,13 @@
                 :link (if (string/blank? link) nil link)})
   (redirect (str "/u/" (:username user))))
 
+(defn is-feed-public? [logged-in-user user]
+  (let [items (:items (db/get-user-privacy (:_id user)))]
+    (or (nil? items) items)))
+
 (defn profile-feed [logged-in-user user]
-  (map item/format-item (db/get-users-items (:_id user) 0 100)))
+  (when (or (is-feed-public? logged-in-user user) (db/following? (:_id logged-in-user) (:_id user)))
+    (map item/format-item (db/get-users-items (:_id user) 0 100))))
 
 (defn profile [logged-in-user username]
   (let [user (db/find-user username)]
