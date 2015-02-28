@@ -15,9 +15,6 @@
 ;; 2 weeks (in seconds)
 (def cookie-max-age (* 14 86400))
 
-(defn format-error [[error]]
-  [:p.error error])
-
 (defn control [field name text & [attrs]]
   (list [:tr
          [:th (label name text)]

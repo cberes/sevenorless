@@ -25,11 +25,6 @@
 (defn update-user [id updates]
   (sql/update! db :web_user updates ["_id = ?" id]))
 
-(defn get-user-bio [id]
-  (sql/query db
-    ["select bio from user_bio where user_id = ?" id]
-    :result-set-fn first))
-
 (defn get-user [id]
   (sql/query db
     ["select u.*, p.image_id from web_user u
@@ -156,6 +151,9 @@
     ["select * from image where _id = ?" id]
     :result-set-fn first))
 
+(defn delete-image [id]
+  (sql/delete! db :image ["_id = ?" id]))
+
 (defn add-item [item]
   (sql/insert! db :item item))
 
@@ -187,3 +185,34 @@
       where u._id = ?
       order by i.created desc, i._id asc" user-id]
     :result-set-fn doall))
+
+(defn get-user-privacy [id]
+  (sql/query db
+    ["select * from user_privacy where user_id = ?" id]
+    :result-set-fn first))
+
+(defn add-user-privacy [privacy]
+  (sql/insert! db :user_privacy privacy))
+
+(defn update-user-privacy [id updates]
+  (sql/update! db :user_privacy updates ["user_id = ?" id]))
+
+(defn get-user-bio [id]
+  (sql/query db
+    ["select bio from user_bio where user_id = ?" id]
+    :result-set-fn first))
+
+(defn add-user-bio [bio]
+  (sql/insert! db :user_bio bio))
+
+(defn update-user-bio [id updates]
+  (sql/update! db :user_bio updates ["user_id = ?" id]))
+
+(defn delete-user-bio [id]
+  (sql/delete! db :user_bio ["user_id = ?" id]))
+
+(defn add-user-portrait [portrait]
+  (sql/insert! db :user_portrait portrait))
+
+(defn delete-user-portrait [id]
+  (sql/delete! db :user_portrait ["user_id = ?" id]))
