@@ -88,16 +88,16 @@ div.i div.b, div.i div.u {
   color: #A4AA82;
   line-height: 1.5
 }
-div.i div.u {
-  background: #A4AA82;
-  color: #F9F9FA;
-}
 div.i div.u a, div.i div.u a:link, div.i div.u a:visited, div.i div.u a:hover, div.i div.u a:active {
-  color: #F9F9FA;
+  color: #A4AA82;
   text-decoration: none;
+}
+div.i div.u {
+  text-align: right;
 }
 div.i div.u a img {
   float: right;
+  padding: 0 0 0 1em;
   width: 100px;
   height: 100px;
   border-radius: 0.25em;
