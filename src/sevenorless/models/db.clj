@@ -157,16 +157,19 @@
 (defn add-item [item]
   (sql/insert! db :item item))
 
-(defn get-items [offset limit]
+(defn get-items [user-id offset limit]
   (sql/query db
     ["select i.*, u.*, a.image_id as user_image_id from item i
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
-      where i.public and (p.items is null or p.items)
-      order by i.created desc, i._id asc"]
+      left outer join follow f on f.followed_id = u._id and f.user_id = ?
+      where (i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?
+      order by i.created desc, i._id asc" user-id user-id]
     :result-set-fn doall))
 
+; posts by those who user follows
+; privacy doesn't matter
 (defn get-follows-items [user-id offset limit]
   (sql/query db
     ["select i.*, u.*, a.image_id as user_image_id from item i
@@ -177,13 +180,17 @@
       order by i.created desc, i._id asc" user-id]
     :result-set-fn doall))
 
-(defn get-users-items [user-id offset limit]
+; if user's privacy setting for posts is private, query will not be run if user is not privileged
+; so consider only per-post privacy
+(defn get-users-items [user-id current-user-id offset limit]
   (sql/query db
     ["select i.*, u.*, a.image_id as user_image_id from item i
       join web_user u on i.user_id = u._id
+      left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
-      where u._id = ?
-      order by i.created desc, i._id asc" user-id]
+      left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
+      where u._id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
+      order by i.created desc, i._id asc" current-user-id user-id current-user-id]
     :result-set-fn doall))
 
 (defn get-user-privacy [id]

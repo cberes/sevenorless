@@ -102,6 +102,9 @@ div.i div.u a img {
   height: 100px;
   border-radius: 0.25em;
 }
+img#portrait {
+  border-radius: 0.25em;
+}
 div.i h3 {
   color: #A4AA82;
   font-size: 1.5em;
@@ -178,9 +181,6 @@ textarea {
   width: 100%;
   height: 15em;
 }
-form#publish input[type=submit] {
-  float: right;
-}
 img#portrait {
   float: left;
   width: 33%;
@@ -199,6 +199,13 @@ table#settings-nav {
 }
 table#settings-nav td {
   text-align: center;
+}
+label.after-input {
+  padding-left: 0.5em;
+  padding-right: 0;
+}
+label.after-input + input {
+  margin-left: 1em;
 }
 .clear {
   clear: both;

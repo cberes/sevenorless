@@ -77,26 +77,36 @@
                  (label :link "Link")
                  [:br]
                  (text-field {:maxlength 2048} :link)]
+                [:p.right
+                 (check-box :public true)
+                 (label {:class "after-input"} :public "Public")
+                 (check-box :comments true)
+                 (label {:class "after-input"} :comments "Allow comments")]
                 [:p
                  (label :img "Image")
-                 (file-upload :img)
-                 (submit-button "Post")])])))
+                 (file-upload :img)]
+                [:p.right (submit-button "Post")]
+                [:div.clear])])))
 
-(defn publish [user title body link file]
+(defn publish [user title body link file public comments]
   (db/add-item {:user_id (:_id user)
                 :image_id (image/save-image file user)
                 :title (if (string/blank? title) nil title)
                 :body (if (string/blank? body) nil body)
-                :link (if (string/blank? link) nil link)})
+                :link (if (string/blank? link) nil link)
+                :comments (boolean comments)
+                :public (boolean public)})
   (redirect (str "/u/" (:username user))))
 
+; not sure if better to query for privacy and maybe not run items query
+; or include privacy in the items query
 (defn is-feed-public? [logged-in-user user]
   (let [items (:items (db/get-user-privacy (:_id user)))]
     (or (nil? items) items)))
 
 (defn profile-feed [logged-in-user user]
-  (when (or (is-feed-public? logged-in-user user) (db/following? (:_id logged-in-user) (:_id user)))
-    (map item/format-item (db/get-users-items (:_id user) 0 100))))
+  ;(when (or (is-feed-public? logged-in-user user) (db/following? (:_id logged-in-user) (:_id user)))
+  (map item/format-item (db/get-users-items (:_id user) (:_id logged-in-user) 0 100)))
 
 (defn profile [logged-in-user username]
   (let [user (db/find-user username)]
@@ -132,6 +142,6 @@
     (GET "/" [] (profile (user/get-user) username))
     (POST "/follow" [] (restricted (follow (user/get-user) username true)))
     (POST "/unfollow" [] (restricted (follow (user/get-user) username false))))
-  (POST "/publish" [title body link img] (restricted (publish (user/get-user) title body link img)))
+  (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) title body link img public comments)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user)))))
