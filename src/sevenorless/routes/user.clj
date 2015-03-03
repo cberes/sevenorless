@@ -89,13 +89,14 @@
                 [:div.clear])])))
 
 (defn publish [user title body link file public comments]
-  (db/add-item {:user_id (:_id user)
-                :image_id (image/save-image file user)
-                :title (if (string/blank? title) nil title)
-                :body (if (string/blank? body) nil body)
-                :link (if (string/blank? link) nil link)
-                :comments (boolean comments)
-                :public (boolean public)})
+  (when-not (and (string/blank? title) (string/blank? body)(string/blank? link) (empty? (:filename file)))
+    (db/add-item {:user_id (:_id user)
+                   :image_id (image/save-image file user)
+                   :title (if (string/blank? title) nil title)
+                   :body (if (string/blank? body) nil body)
+                   :link (if (string/blank? link) nil link)
+                   :comments (boolean comments)
+                   :public (boolean public)}))
   (redirect (str "/u/" (:username user))))
 
 ; not sure if better to query for privacy and maybe not run items query

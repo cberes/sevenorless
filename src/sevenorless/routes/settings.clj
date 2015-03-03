@@ -81,7 +81,24 @@
                  [:label (radio-button :items (not (or (nil? privacy) (:items privacy))) "private") "private"]]
             [:td.error (on-error :items first)]]]])))
 
-(defn handle-account-settings [user]
+(defn handle-account-settings [user username email pass pass1 old-pass]
+  ; validation
+  (when-not (string/blank? pass)
+    (user/validate-password pass pass1)
+    (rule (and (has-value? old-pass) (crypt/compare old-pass (:password user)))
+          [:old-pass "invalid password"]))
+  (when-not (string/blank? username)
+    (user/validate-username username))
+  (when-not (string/blank? email)
+    (user/validate-email email))
+  ; update user
+  (when-not (errors? :username :email :pass :pass1 :old-pass)
+    (when-not (string/blank? email)
+      (user/send-verify-email user (db/update-user-email (:_id user) email)))
+    (when-not (string/blank? username)
+      (db/update-user (:_id user) {:username username}))
+    (when-not (string/blank? pass)
+      (db/update-user (:_id user) {:password (crypt/encrypt pass)})))
   (account-settings user))
 
 (defn handle-profile-settings [user bio-text {:keys [filename] :as portrait} default-portrait]
@@ -117,4 +134,4 @@
     (GET "/privacy" [] (restricted (privacy-settings (user/get-user))))
     (POST "/privacy" [items] (restricted (handle-privacy-settings (user/get-user) items)))
     (GET "/account" [] (restricted (account-settings (user/get-user)))) ; password, email, privacy
-    (POST "/account" [] (restricted (handle-account-settings (user/get-user))))))
+    (POST "/account" [username email pass pass1 old-pass] (restricted (handle-account-settings (user/get-user) username email pass pass1 old-pass)))))

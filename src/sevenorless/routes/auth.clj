@@ -61,23 +61,9 @@
 	            (control password-field :pass1 "Confirm password")
               [:tr [:th] [:td (submit-button "Change password")] [:td]]])))
 
-;; TODO
-(defn send-password-reset-email [user token]
-  (println user token))
-
-;; TODO
-(defn send-verify-email [user token]
-  (println user token))
-
-(defn validate-password [pass pass1]
-  (rule (has-value? pass)
-        [:pass "password is required"])
-  (rule (= pass pass1)
-        [:pass1 "password was not typed correctly"]))
-
 (defn handle-password-reset [secret pass pass1]
   (let [user (db/get-password-reset-user secret)]
-    (validate-password pass pass1)
+    (user/validate-password pass pass1)
     (rule (or (errors?) (not-nil? user))
           [:pass "password request is invalid"])
 	  (if (errors? :pass :pass1)
@@ -94,7 +80,7 @@
   (if (errors? :id)
     (forgot-password-page)
     (do
-      (send-password-reset-email user (db/create-password-reset-record user))
+      (user/send-password-reset-email user (db/create-password-reset-record user))
       (layout/simple "Password reset" [:p "We've sent an email to you to let you reset your password."]))))
 
 (defn handle-password-reset-request [id]
@@ -103,30 +89,18 @@
     (send-password-reset-request (db/find-user-by-email id))))
 
 (defn handle-registration [username email pass pass1]
-  (validate-password pass pass1)
   (rule (has-value? username)
         [:username "username is required"])
-  (rule (or (not (has-value? username)) (matches-regex? username #".{4,25}"))
-        [:username "username must be between 4 and 25 characters long"])
-  (rule (or (not (has-value? username)) (matches-regex? username #"^[-a-zA-Z0-9]+$"))
-        [:username "username can have only letters, digits, and dashes"])
-;  (rule (or (not (has-value? username)) (matches-regex? username #"[a-zA-Z]"))
-;        [:username "username must have at least one letter"])
-  (rule (or (not (has-value? username)) (matches-regex? username #"^[^-].+[^-]$"))
-        [:username "username cannot begin or end with a dash"])
-  (rule (is-email? email)
-        [:email "valid email address is required"])
-  (rule (or (errors?) (not (has-value? username)) (not (db/find-user username)))
-        [:username "this username is taken"])
-  (rule (or (errors?) (not (is-email? email)) (not (db/find-user-by-email email)))
-        [:email "this email address is already registered"])
+  (user/validate-password pass pass1)
+  (user/validate-username username)
+  (user/validate-email email)
   (if (errors? :username :email :pass :pass1)
     (registration-page)
     (do
       (db/add-user {:username username :email email :password (crypt/encrypt pass)})
       ; TODO kind of stupid that we have to query for the user right away
       (let [user (db/find-user username)]
-        (send-verify-email user (db/create-email-verify-record user))
+        (user/send-verify-email user (db/create-email-verify-record user))
         (session/put! :user (:_id user))
         (redirect (str "/u/" username))))))
 
