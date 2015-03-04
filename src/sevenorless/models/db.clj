@@ -27,47 +27,45 @@
 
 (defn get-user [id]
   (sql/query db
-    ["select u.*, p.image_id from web_user u
+    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
       left outer join user_portrait p on u._id = p.user_id
+      left outer join user_privacy y on u._id = y.user_id
       where u._id = ?" id]
     :result-set-fn first))
 
-(defn get-follows [id]
-  (sql/query db
-    ["select u._id, u.username, f.created from web_user u join follow f on f.followed_id = u._id where f.user_id = ? order by u.username" id]
-    :result-set-fn doall))
-
 (defn find-user [username]
   (sql/query db
-    ["select u.*, p.image_id from web_user u
+    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
       left outer join user_portrait p on u._id = p.user_id
+      left outer join user_privacy y on u._id = y.user_id
       where u.username = ?" username]
     :result-set-fn first))
 
 (defn find-user-by-email [email]
   (sql/query db
-    ["select u.*, p.image_id from web_user u
+    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
       left outer join user_portrait p on u._id = p.user_id
+      left outer join user_privacy y on u._id = y.user_id
       where u.email = ?" email]
     :result-set-fn first))
 
 (defn compare-user-token [id token]
   (crypt/compare token (:token
     (sql/query db
-	    ["select token from user_token where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
-	    :result-set-fn first))))
+      ["select token from user_token where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
+      :result-set-fn first))))
 
 (defn compare-user-password-reset [id token]
   (crypt/compare token (:token
     (sql/query db
-	    ["select token from user_password_reset where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
-	    :result-set-fn first))))
+      ["select token from user_password_reset where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
+      :result-set-fn first))))
 
 (defn compare-user-email-verify [id token]
   (crypt/compare token (:token
     (sql/query db
-	    ["select token from user_email_verify where user_id = ? limit 1" id]
-	    :result-set-fn first))))
+      ["select token from user_email_verify where user_id = ? limit 1" id]
+      :result-set-fn first))))
 
 (defn create-email-verify-record [user]
   (let [id (:_id user) token (get-random-id 32)]
@@ -112,12 +110,31 @@
 ;; do not call if user is in session
 (defn get-remembered-user [cookie-value]
   (when (not (nil? cookie-value))
-	  (let [{id 0, token 1} (str/split cookie-value #":" 2) id (Integer/parseInt id)]
-	    (when (compare-user-token id token) (get-user id)))))
+    (let [{id 0, token 1} (str/split cookie-value #":" 2) id (Integer/parseInt id)]
+      (when (compare-user-token id token) (get-user id)))))
+
+(defn get-follows [id]
+  (sql/query db
+    ["select u._id, u.username, f.created from web_user u join follow f on f.followed_id = u._id where f.user_id = ? order by u.username" id]
+    :result-set-fn doall))
+
+(defn get-pending-followers [id]
+  (sql/query db
+    ["select u._id, u.username, f.created
+      from web_user u
+      join pending_follow f on f.user_id = u._id
+      where f.followed_id = ? and f.approved is null
+      order by date_trunc('day', f.created) desc, u.username" id]
+    :result-set-fn doall))
 
 (defn followers-count [id]
   (sql/query db
     ["select COALESCE(count(*), 0) as count from follow where followed_id = ?" id]
+    :result-set-fn first))
+
+(defn pending-followers-count [id]
+  (sql/query db
+    ["select COALESCE(count(*), 0) as count from pending_follow where followed_id = ? and approved is null" id]
     :result-set-fn first))
 
 (defn following-count [id]
@@ -132,11 +149,37 @@
 
 (defn follow [id other-id]
   (when (and (not= id other-id) (not (following? id other-id)))
+    (sql/delete! db :pending_follow ["user_id = ? and followed_id = ?" id other-id])
     (sql/insert! db :follow {:user_id id :followed_id other-id})))
 
 (defn unfollow [id other-id]
   (when (not= id other-id)
+    (sql/delete! db :pending_follow ["user_id = ? and followed_id = ?" id other-id])
     (sql/delete! db :follow ["user_id = ? and followed_id = ?" id other-id])))
+
+; leave in 'pending' state for a month before a user can request to follow again
+; called as user who wants to follow another user
+(defn follow-pending? [id other-id]
+  (sql/query db
+    ["select u._id, u.username, f.created from pending_follow where user_id = ? and followed_id = ? and (approved is null or created >= (NOW() - INTERVAL '1 month'))" id other-id]
+    :result-set-fn first))
+
+; called as user who wants to follow another user
+(defn request-follow [id other-id]
+  (when (and (not= id other-id) (not (following? id other-id)) (not (follow-pending? id other-id)))
+    (sql/delete! db :pending_follow ["user_id = ? and followed_id = ?" id other-id])
+    (sql/insert! db :pending_follow {:user_id id :followed_id other-id})))
+
+; called as user who is being followed
+(defn approve-follow [id other-id]
+  (when (and (not= id other-id) (not (following? other-id id)))
+    (sql/delete! db :pending_follow ["user_id = ? and followed_id = ?" other-id id])
+    (sql/insert! db :follow {:user_id other-id :followed_id id})))
+
+; called as user who is being followed
+(defn deny-follow [id other-id]
+  (when (and (not= id other-id))
+    (sql/update! db :pending_follow ["user_id = ? and followed_id = ?" other-id id] {:approved false})))
 
 (defn daily-items-count [id]
   (sql/query db

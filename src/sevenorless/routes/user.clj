@@ -23,7 +23,9 @@
 
 (defn details-follow-link [logged-in-user user]
   (if (and (not (nil? logged-in-user)) (not= (:_id user) (:_id logged-in-user)))
-    (follow-link (:username user) (db/following? (:_id logged-in-user) (:_id user)))
+    (if (db/follow-pending? (:_id logged-in-user) (:_id user))
+      "Pending"
+      (follow-link (:username user) (db/following? (:_id logged-in-user) (:_id user))))
     (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
       (link-to "/settings" "Settings"))))
 
@@ -31,6 +33,10 @@
   (if (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
     (link-to "/following" "Following")
     "Following"))
+
+(defn meta-link [logged-in-user user]
+  (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
+    [:tr [:th "Drafts"] [:td 0] [:th (link-to "/followers/pending" "Pending Followers")] [:td (:count (db/pending-followers-count (:_id user)))]]))
 
 (defn profile-details [logged-in-user user]
   (list
@@ -40,7 +46,8 @@
       [:table#profile
         [:tr [:td {:colspan 4 :style "text-align: right;"} (details-follow-link logged-in-user user)]]
         [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (:count (db/followers-count (:_id user)))]]
-        [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (:count (db/following-count (:_id user)))]]]
+        [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (:count (db/following-count (:_id user)))]]
+        (meta-link logged-in-user user)]
       (when-let [bio (:bio (db/get-user-bio (:_id logged-in-user)))]
         [:div#profile-bio bio])
       [:div.clear]]))
@@ -124,7 +131,14 @@
   (let [username (:username f)]
     [:tr [:td (link-to (str "/u/" username) username)]
          [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
-         [:td (follow-link username true)]]))
+         [:td (format-link username true)]]))
+
+(defn format-pending-follow [f]
+  (let [username (:username f)]
+    [:tr [:td (link-to (str "/u/" username) username)]
+         [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
+         [:td (link-to {:id "approve" :onclick (str "approve(this,'" username "');")} "#" "Approve")]
+         [:td (link-to {:id "deny" :onclick (str "deny(this,'" username "');")} "#" "Deny")]]))
 
 (defn following [user]
   (let [title "Following" records (db/get-follows (:_id user))]
@@ -133,16 +147,33 @@
       (layout/simple title [:table (map format-follow records)]))))
 
 (defn follow [logged-in-user username follow?]
-  (let [user (db/find-user username)]
+  (when-let [user (db/find-user username)]
     (if follow?
-      (db/follow (:_id logged-in-user) (:_id user))
+      (if (:items_public user)
+        (db/follow (:_id logged-in-user) (:_id user))
+        (db/request-follow (:_id logged-in-user) (:_id user)))
       (db/unfollow (:_id logged-in-user) (:_id user)))))
+
+(defn approve [logged-in-user username approve?]
+  (when-let [user (db/find-user username)]
+    (if approve?
+      (db/approve-follow (:_id logged-in-user) (:_id user))
+      (db/deny-follow (:_id logged-in-user) (:_id user)))))
+
+(defn pending-followers [user]
+  (let [title "Following" records (db/get-pending-followers (:_id user))]
+    (if (empty? records)
+      (layout/simple title [:p "You have no followers pending your approval."])
+      (layout/simple title [:table (map format-pending-follow records)]))))
 
 (defroutes user-routes
   (context "/u/:username" [username]
     (GET "/" [] (profile (user/get-user) username))
     (POST "/follow" [] (restricted (follow (user/get-user) username true)))
-    (POST "/unfollow" [] (restricted (follow (user/get-user) username false))))
+    (POST "/unfollow" [] (restricted (follow (user/get-user) username false)))
+    (POST "/approve" [] (restricted (approve (user/get-user) username true)))
+    (POST "/deny" [] (restricted (deny (user/get-user) username false))))
   (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) title body link img public comments)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
-  (GET "/following" [] (restricted (following (user/get-user)))))
+  (GET "/following" [] (restricted (following (user/get-user))))
+  (GET "/followers/pending" [] (restricted (pending-followers (user/get-user)))))
