@@ -202,7 +202,9 @@
 
 (defn get-items [user-id offset limit]
   (sql/query db
-    ["select i.*, u.*, a.image_id as user_image_id from item i
+    ["select i.*, u.*, a.image_id as user_image_id,
+      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+      from item i
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
@@ -215,7 +217,9 @@
 ; privacy doesn't matter
 (defn get-follows-items [user-id offset limit]
   (sql/query db
-    ["select i.*, u.*, a.image_id as user_image_id from item i
+    ["select i.*, u.*, a.image_id as user_image_id,
+      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+      from item i
       join web_user u on i.user_id = u._id
       join follow f on f.followed_id = u._id
       left outer join user_portrait a on u._id = a.user_id
@@ -227,7 +231,9 @@
 ; so consider only per-post privacy
 (defn get-users-items [user-id current-user-id offset limit]
   (sql/query db
-    ["select i.*, u.*, a.image_id as user_image_id from item i
+    ["select i.*, u.*, a.image_id as user_image_id,
+      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+      from item i
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id

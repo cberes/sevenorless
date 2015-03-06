@@ -8,6 +8,9 @@
 (defn format-time [time]
   (.format (java.text.SimpleDateFormat. "hh:mm aa, MMMM dd") time))
 
+(defn format-date [time]
+  (.format (java.text.SimpleDateFormat. "MMM dd") time))
+
 (defn build-title [{:keys [link title]}]
   (if (nil? link)
     (if (nil? title) nil [:h3 title])
@@ -21,7 +24,7 @@
   (when-not (and (nil? title) (string/blank? body))
     [:div.b title body]))
 
-(defn format-item [item]
+(defn build-item [item]
   [:div.i
    (build-image item)
    (build-body (build-title item) (:body item))
@@ -34,3 +37,9 @@
     [:br]
     "tags"
     [:div.clear]]])
+
+(defn format-item [item]
+  (let [formatted-item (build-item item)]
+    (if (= (:rank item) 1)
+      (list [:h2 (format-date (:created item))] formatted-item)
+      formatted-item)))
