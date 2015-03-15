@@ -161,7 +161,7 @@
 ; called as user who wants to follow another user
 (defn follow-pending? [id other-id]
   (sql/query db
-    ["select u._id, u.username, f.created from pending_follow where user_id = ? and followed_id = ? and (approved is null or created >= (NOW() - INTERVAL '1 month'))" id other-id]
+    ["select u._id, u.username, f.created from pending_follow f join web_user u on f.followed_id = u._id where f.user_id = ? and f.followed_id = ? and (f.approved is null or f.created >= (NOW() - INTERVAL '1 month'))" id other-id]
     :result-set-fn first))
 
 ; called as user who wants to follow another user

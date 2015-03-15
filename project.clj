@@ -5,12 +5,13 @@
                  [compojure "1.3.2"]
                  [hiccup "1.0.5"]
                  [lib-noir "0.9.5"]
-                 [buddy/buddy-hashers "0.4.2"]
+                 [buddy/buddy-hashers "0.4.1"]
                  [ring-server "0.3.1"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
-                 [net.tanesha.recaptcha4j/recaptcha4j "0.0.8"]]
+                 [clj-http "1.0.1"]
+                 [org.clojure/data.json "0.2.6"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler sevenorless.handler/app
          :init sevenorless.handler/init

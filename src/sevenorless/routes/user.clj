@@ -131,7 +131,7 @@
   (let [username (:username f)]
     [:tr [:td (link-to (str "/u/" username) username)]
          [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
-         [:td (format-link username true)]]))
+         [:td (follow-link username true)]]))
 
 (defn format-pending-follow [f]
   (let [username (:username f)]
@@ -172,7 +172,7 @@
     (POST "/follow" [] (restricted (follow (user/get-user) username true)))
     (POST "/unfollow" [] (restricted (follow (user/get-user) username false)))
     (POST "/approve" [] (restricted (approve (user/get-user) username true)))
-    (POST "/deny" [] (restricted (deny (user/get-user) username false))))
+    (POST "/deny" [] (restricted (approve (user/get-user) username false))))
   (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) title body link img public comments)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user))))

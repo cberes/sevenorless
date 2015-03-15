@@ -8,6 +8,8 @@
             [buddy.hashers :as crypt]
             [noir.util.route :refer [restricted]]
             [noir.validation :refer [rule errors? has-value? is-email? matches-regex? not-nil? on-error]]
+            [clj-http.client :as client]
+            [clojure.data.json :as json]
             [sevenorless.views.layout :as layout]
             [sevenorless.models.db :as db]
             [sevenorless.models.user :as user]))
@@ -29,6 +31,11 @@
 	            (control text-field :email "Email" {:maxlength 2048})
 	            (control password-field :pass "Password")
 	            (control password-field :pass1 "Confirm password")
+              [:tr
+               [:th " "]
+               [:td
+                [:div.g-recaptcha {:data-sitekey "6LeHigMTAAAAAGQUrmT1Yj-VYzXwyyHVKlM0r8NQ"}]]
+               [:td.error {:colspan 2} (on-error :captcha first)]]
               [:td {:colspan 3} "By creating an account, you acknowledge that you have read and agree to our "
                                 (link-to "/policy" "terms of service")
                                 ". They're short, take a minute to read them."]
@@ -88,13 +95,25 @@
     (send-password-reset-request user)
     (send-password-reset-request (db/find-user-by-email id))))
 
-(defn handle-registration [username email pass pass1]
-  (rule (has-value? username)
-        [:username "username is required"])
+(defn send-captcha-request [response remoteip]
+  (client/post "https://www.google.com/recaptcha/api/siteverify"
+    {:form-params {:secret "6LeHigMTAAAAAFU-v1rPbDNuHQZe9an711uwYL_v"
+                   :response response
+                   :remoteip remoteip}
+     :accept :json}))
+
+(defn human? [response remoteip]
+  (try
+    (:success (json/read-str (:body (send-captcha-request response remoteip)) :key-fn keyword))
+    (catch Exception e (prn "caught" e))))
+
+(defn handle-registration [username email pass pass1 g-recaptcha-response remoteip]
+  (rule (has-value? username) [:username "username is required"])
+  (rule (human? g-recaptcha-response remoteip) [:captcha "verification failed"])
   (user/validate-password pass pass1)
   (user/validate-username username)
   (user/validate-email email)
-  (if (errors? :username :email :pass :pass1)
+  (if (errors? :username :email :pass :pass1 :captcha)
     (registration-page)
     (do
       (db/add-user {:username username :email email :password (crypt/encrypt pass)})
@@ -121,9 +140,9 @@
 
 (defn handle-email-verify [q]
   (let [title "Verify email"]
-	  (if-let [user (db/verify-email q)]
-	    (layout/simple title [:p "Success! Your email address was verified."])
-	    (layout/simple title [:p "Uh oh, we could not verify your email address. Is it already verified?"]))))
+    (if-let [user (db/verify-email q)]
+     (layout/simple title [:p "Success! Your email address was verified."])
+     (layout/simple title [:p "Uh oh, we could not verify your email address. Is it already verified?"]))))
 
 (defmacro enforce-logged-out [& body]
   `(if-not (nil? (user/get-user)) (redirect "/") (do ~@body)))
@@ -131,8 +150,8 @@
 ;; underscore indicates that an argument is ignored
 (defroutes auth-routes
   (GET "/register" [_] (enforce-logged-out (registration-page)))
-  (POST "/register" [username email pass pass1]
-        (enforce-logged-out (handle-registration username email pass pass1)))
+  (POST "/register" {:keys [remote-addr params] :as request} ;[username email pass pass1]
+        (enforce-logged-out (handle-registration (:username params) (:email params) (:pass params) (:pass1 params) (:g-recaptcha-response params) remote-addr)))
   (GET "/login" [] (enforce-logged-out (login-page)))
   (POST "/login" [username pass remember]
         (enforce-logged-out (handle-login username pass remember)))
