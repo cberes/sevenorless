@@ -8,7 +8,7 @@
             [noir.io :refer [upload-file resource-path]]
             [noir.response :refer [redirect]]
             [noir.session :as session]
-            [noir.util.crypt :as crypt]
+            [buddy.hashers :as crypt]
             [noir.util.route :refer [restricted]]
             [noir.validation :refer [rule errors? has-value? is-email? matches-regex? not-nil? on-error]]
             [sevenorless.views.layout :as layout]
@@ -85,7 +85,7 @@
   ; validation
   (when-not (string/blank? pass)
     (user/validate-password pass pass1)
-    (rule (and (has-value? old-pass) (crypt/compare old-pass (:password user)))
+    (rule (and (has-value? old-pass) (crypt/check old-pass (:password user)))
           [:old-pass "invalid password"]))
   (when-not (string/blank? username)
     (user/validate-username username))

@@ -5,6 +5,7 @@
                  [compojure "1.3.2"]
                  [hiccup "1.0.5"]
                  [lib-noir "0.9.5"]
+                 [buddy/buddy-hashers "0.4.2"]
                  [ring-server "0.3.1"]
                  [postgresql/postgresql "9.3-1102.jdbc41"]
                  [org.clojure/java.jdbc "0.3.6"]

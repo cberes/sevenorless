@@ -5,7 +5,7 @@
             [noir.cookies :as cookies]
             [noir.response :refer [redirect]]
             [noir.session :as session]
-            [noir.util.crypt :as crypt]
+            [buddy.hashers :as crypt]
             [noir.util.route :refer [restricted]]
             [noir.validation :refer [rule errors? has-value? is-email? matches-regex? not-nil? on-error]]
             [sevenorless.views.layout :as layout]
@@ -110,7 +110,7 @@
           [:username "username is required"])
     (rule (has-value? pass)
           [:pass "password is required"])
-    (rule (and user (crypt/compare pass (:password user)))
+    (rule (and user (crypt/check pass (:password user)))
           [:pass "invalid password"])
     (if (errors? :username :pass)
       (login-page)

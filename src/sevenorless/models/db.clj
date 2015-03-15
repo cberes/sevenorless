@@ -2,7 +2,7 @@
   (:import com.mchange.v2.c3p0.ComboPooledDataSource)
   (:require [clojure.java.jdbc :as sql]
             [jdbc.pool.c3p0 :as pool]
-            [noir.util.crypt :as crypt]
+            [buddy.hashers :as crypt]
             [clojure.string :as str])
   (:import java.sql.DriverManager))
 
@@ -50,19 +50,19 @@
     :result-set-fn first))
 
 (defn compare-user-token [id token]
-  (crypt/compare token (:token
+  (crypt/check token (:token
     (sql/query db
       ["select token from user_token where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
       :result-set-fn first))))
 
 (defn compare-user-password-reset [id token]
-  (crypt/compare token (:token
+  (crypt/check token (:token
     (sql/query db
       ["select token from user_password_reset where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
       :result-set-fn first))))
 
 (defn compare-user-email-verify [id token]
-  (crypt/compare token (:token
+  (crypt/check token (:token
     (sql/query db
       ["select token from user_email_verify where user_id = ? limit 1" id]
       :result-set-fn first))))
