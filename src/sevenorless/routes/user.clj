@@ -36,7 +36,7 @@
 
 (defn meta-link [logged-in-user user]
   (when (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user)))
-    [:tr [:th "Drafts"] [:td 0] [:th (link-to "/followers/pending" "Pending Followers")] [:td (:count (db/pending-followers-count (:_id user)))]]))
+    [:tr [:th "Drafts"] [:td 0] [:th (link-to "/followers/pending" "Pending Followers")] [:td (db/pending-followers-count (:_id user))]]))
 
 (defn profile-details [logged-in-user user]
   (list
@@ -45,15 +45,15 @@
       (image {:id "portrait"} (if-not (nil? (:image_id logged-in-user)) (str "/img/" (:image_id logged-in-user) ".jpg") "/img/anon.png"))
       [:table#profile
         [:tr [:td {:colspan 4 :style "text-align: right;"} (details-follow-link logged-in-user user)]]
-        [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (:count (db/followers-count (:_id user)))]]
-        [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (:count (db/following-count (:_id user)))]]
+        [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (db/followers-count (:_id user))]]
+        [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (db/following-count (:_id user))]]
         (meta-link logged-in-user user)]
       (when-let [bio (:bio (db/get-user-bio (:_id logged-in-user)))]
         [:div#profile-bio bio])
       [:div.clear]]))
 
 (defn post-count-message [id]
-  (let [count (:count (db/daily-items-count id)) remaining (- 7 count)]
+  (let [count (db/daily-items-count id) remaining (- 7 count)]
     (if (= remaining 0)
       "You used all your items today! If you create another item today, it will be saved as a draft."
       (str "You can post " remaining " more item" (when (not= remaining 1) "s") " today."))))

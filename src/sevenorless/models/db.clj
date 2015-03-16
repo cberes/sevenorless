@@ -127,20 +127,25 @@
       order by date_trunc('day', f.created) desc, u.username" id]
     :result-set-fn doall))
 
+(defn users-count []
+  (:count (sql/query db
+            ["select COALESCE(count(*), 0) as count from web_user where deactivated is null"]
+            :result-set-fn first)))
+
 (defn followers-count [id]
-  (sql/query db
-    ["select COALESCE(count(*), 0) as count from follow where followed_id = ?" id]
-    :result-set-fn first))
+  (:count (sql/query db
+            ["select COALESCE(count(*), 0) as count from follow where followed_id = ?" id]
+            :result-set-fn first)))
 
 (defn pending-followers-count [id]
-  (sql/query db
-    ["select COALESCE(count(*), 0) as count from pending_follow where followed_id = ? and approved is null" id]
-    :result-set-fn first))
+  (:count (sql/query db
+            ["select COALESCE(count(*), 0) as count from pending_follow where followed_id = ? and approved is null" id]
+            :result-set-fn first)))
 
 (defn following-count [id]
-  (sql/query db
-    ["select COALESCE(count(*), 0) as count from follow where user_id = ?" id]
-    :result-set-fn first))
+  (:count (sql/query db
+            ["select COALESCE(count(*), 0) as count from follow where user_id = ?" id]
+            :result-set-fn first)))
 
 (defn following? [id other-id]
   (sql/query db
@@ -182,9 +187,9 @@
     (sql/update! db :pending_follow ["user_id = ? and followed_id = ?" other-id id] {:approved false})))
 
 (defn daily-items-count [id]
-  (sql/query db
-    ["select COALESCE(count(*), 0) as count from item where user_id = ? and created >= CURRENT_DATE" id]
-    :result-set-fn first))
+  (:count (sql/query db
+            ["select COALESCE(count(*), 0) as count from item where user_id = ? and created >= CURRENT_DATE" id]
+            :result-set-fn first)))
 
 (defn add-image [image]
   (sql/insert! db :image image))
@@ -200,6 +205,9 @@
 (defn add-item [item]
   (sql/insert! db :item item))
 
+(def page-filter-clause
+  " and (i.created < ? or (i.created =  and i._id > ?))")
+
 (defn get-items [user-id offset limit]
   (sql/query db
     ["select i.*, u.*, a.image_id as user_image_id,
@@ -210,7 +218,8 @@
       left outer join user_portrait a on u._id = a.user_id
       left outer join follow f on f.followed_id = u._id and f.user_id = ?
       where (i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?
-      order by i.created desc, i._id asc" user-id user-id]
+      order by i.created desc, i._id asc
+      limit ?" user-id user-id limit]
     :result-set-fn doall))
 
 ; posts by those who user follows
@@ -224,7 +233,8 @@
       join follow f on f.followed_id = u._id
       left outer join user_portrait a on u._id = a.user_id
       where f.user_id = ?
-      order by i.created desc, i._id asc" user-id]
+      order by i.created desc, i._id asc
+      limit ?" user-id limit]
     :result-set-fn doall))
 
 ; if user's privacy setting for posts is private, query will not be run if user is not privileged
@@ -239,7 +249,8 @@
       left outer join user_portrait a on u._id = a.user_id
       left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
       where u._id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
-      order by i.created desc, i._id asc" current-user-id user-id current-user-id]
+      order by i.created desc, i._id asc
+      limit ?" current-user-id user-id current-user-id limit]
     :result-set-fn doall))
 
 (defn get-user-privacy [id]

@@ -113,6 +113,7 @@
   (user/validate-password pass pass1)
   (user/validate-username username)
   (user/validate-email email)
+  (rule (< (db/users-count) 100) [:username "registration is closed,  please check back soon"])
   (if (errors? :username :email :pass :pass1 :captcha)
     (registration-page)
     (do
