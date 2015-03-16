@@ -7,7 +7,7 @@
   (:import [java.io File]))
 
 (defn image-store-path []
-  "/home/corey/siol/user-images")
+  (System/getProperty "image.store.path"))
 
 (defn file-ext [content-type]
   (case content-type
