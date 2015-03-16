@@ -6,8 +6,11 @@
             [sevenorless.models.db :as db])
   (:import [java.io File]))
 
+(def default-image-store-path
+  (delay (System/getProperty "image.store.path")))
+
 (defn image-store-path []
-  (System/getProperty "image.store.path"))
+  @default-image-store-path)
 
 (defn file-ext [content-type]
   (case content-type
