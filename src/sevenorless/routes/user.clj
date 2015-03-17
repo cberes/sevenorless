@@ -112,9 +112,12 @@
   (let [items (:items (db/get-user-privacy (:_id user)))]
     (or (nil? items) items)))
 
-(defn profile-feed [logged-in-user user]
-  ;(when (or (is-feed-public? logged-in-user user) (db/following? (:_id logged-in-user) (:_id user)))
-  (map item/format-item (db/get-users-items (:_id user) (:_id logged-in-user) 0 100)))
+(defn profile-feed [logged-in-user user]\
+  (let [items (db/get-users-items (:_id user) (:_id logged-in-user) 0 100)]
+    (if (empty? items)
+      (list [:h2 "Feed"]
+            [:div.c "There's nothing here!"])
+      (map item/format-item items))))
 
 (defn profile [logged-in-user username]
   (let [user (db/find-user username)]
@@ -125,7 +128,13 @@
 
 (defn feed [user]
   (layout/common
-    (map item/format-item (db/get-follows-items (:_id user) 0 100))))
+    (let [items (db/get-follows-items (:_id user) 0 100)]
+      (if (empty? items)
+        (list [:h2 "My Feed"]
+              [:div.c "Follow more people to see their posts here! Or see "
+               (link-to "/" "everyone's posts")
+               "."])
+        (map item/format-item items)))))
 
 (defn format-follow [f]
   (let [username (:username f)]
