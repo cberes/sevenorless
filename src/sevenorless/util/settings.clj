@@ -7,7 +7,7 @@
   (let [file (file properties-file-name)]
     (if (.exists file) file (resource properties-file-name))))
 
-(defn load []
+(defn load-properties []
   (let [props (java.util.Properties. (System/getProperties))]
     (.load props (reader (properties-file)))
     (System/setProperties props)))

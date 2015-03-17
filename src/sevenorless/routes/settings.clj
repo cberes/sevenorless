@@ -104,8 +104,6 @@
 (defn handle-profile-settings [user bio-text {:keys [filename] :as portrait} default-portrait]
   (let [id (:_id user) bio (if-not (string/blank? bio-text) bio-text nil) bio-row {:bio bio}]
     ; delete current portrait
-    (println filename)
-    (println default-portrait)
     (when (or (not (empty? filename)) default-portrait)
       (db/delete-user-portrait id)
       (image/delete-image (:image_id user)))

@@ -10,7 +10,6 @@
             [noir.session :as session]
             [noir.util.middleware :refer [wrap-access-rules]]
             [noir.validation :refer [wrap-noir-validation]]
-            [sevenorless.util.settings :as settings]
             [sevenorless.models.db :as db]
             [sevenorless.models.user :as user]
             [sevenorless.routes.auth :refer [auth-routes]]
@@ -18,10 +17,11 @@
             [sevenorless.routes.home :refer [home-routes]]
             [sevenorless.routes.policy :refer [policy-routes]]
             [sevenorless.routes.settings :refer [settings-routes]]
-            [sevenorless.routes.user :refer [user-routes]]))
+            [sevenorless.routes.user :refer [user-routes]]
+            [sevenorless.util.settings :refer [load-properties]]))
 
 (defn init []
-  (settings/load)
+  (load-properties)
   (println "sevenorless is starting"))
 
 (defn destroy []
