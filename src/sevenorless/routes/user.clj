@@ -42,13 +42,13 @@
   (list
     [:h2 (:username user)]
     [:div.c
-      (image {:id "portrait"} (if-not (nil? (:image_id logged-in-user)) (str "/img/" (:image_id logged-in-user) ".jpg") "/img/anon.png"))
+      (image {:id "portrait"} (if-not (nil? (:image_id user)) (str "/img/" (:image_id user) ".jpg") "/img/anon.png"))
       [:table#profile
         [:tr [:td {:colspan 4 :style "text-align: right;"} (details-follow-link logged-in-user user)]]
         [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (db/followers-count (:_id user))]]
         [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (db/following-count (:_id user))]]
         (meta-link logged-in-user user)]
-      (when-let [bio (:bio (db/get-user-bio (:_id logged-in-user)))]
+      (when-let [bio (:bio (db/get-user-bio (:_id user)))]
         [:div#profile-bio bio])
       [:div.clear]]))
 
