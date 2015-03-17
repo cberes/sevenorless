@@ -1,5 +1,5 @@
 function getFollowUrl(username, action) {
-  return '//localhost:3000/u/' + username + '/' + action;
+  return '/u/' + username + '/' + action;
 }
 
 function follow(element, username) {
