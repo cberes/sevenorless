@@ -88,7 +88,7 @@
     (rule (and (has-value? old-pass) (crypt/check old-pass (:password user)))
           [:old-pass "invalid password"]))
   (when-not (string/blank? username)
-    (user/validate-username username))
+    (user/validate-username username (:_id user)))
   (when-not (string/blank? email)
     (user/validate-email email))
   ; update user

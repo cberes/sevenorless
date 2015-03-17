@@ -35,7 +35,7 @@
   (rule (= pass pass1)
         [:pass1 "password was not typed correctly"]))
 
-(defn validate-username [username]
+(defn validate-username [username id]
   (rule (or (not (has-value? username)) (matches-regex? username #".{4,25}"))
         [:username "username must be between 4 and 25 characters long"])
   (rule (or (not (has-value? username)) (matches-regex? username #"^[-a-zA-Z0-9]+$"))
@@ -44,7 +44,7 @@
 ;        [:username "username must have at least one letter"])
   (rule (or (not (has-value? username)) (matches-regex? username #"^[^-].+[^-]$"))
         [:username "username cannot begin or end with a dash"])
-  (rule (or (errors?) (not (has-value? username)) (not (db/find-user username)))
+  (rule (or (errors?) (not (has-value? username)) (not (db/check-for-user username id)))
         [:username "this username is taken"]))
 
 (defn validate-email [email]

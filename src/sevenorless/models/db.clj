@@ -38,7 +38,7 @@
     ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
-      where u.username = ?" username]
+      where u.username ilike ?" username]
     :result-set-fn first))
 
 (defn find-user-by-email [email]
@@ -46,7 +46,12 @@
     ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
-      where u.email = ?" email]
+      where u.email ilike ?" email]
+    :result-set-fn first))
+
+(defn check-for-user [username id]
+  (sql/query @db
+    ["select _id from web_user where username ilike ? and _id <> ?" username id]
     :result-set-fn first))
 
 (defn compare-user-token [id token]

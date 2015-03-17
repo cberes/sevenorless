@@ -55,7 +55,7 @@
   (layout/simple "Password reset"
     (form-to [:post "/forgot-password"]
              [:table
-              (control text-field :id "Password or email" {:maxlength 2048})
+              (control text-field :id "Username or email" {:maxlength 2048})
               [:tr [:th] [:td (submit-button "Submit")] [:td]]])))
 
 (defn password-reset-page [q]
@@ -111,7 +111,7 @@
   (rule (has-value? username) [:username "username is required"])
   (rule (human? g-recaptcha-response remoteip) [:captcha "verification failed"])
   (user/validate-password pass pass1)
-  (user/validate-username username)
+  (user/validate-username username 0)
   (user/validate-email email)
   (rule (< (db/users-count) 100) [:username "registration is closed,  please check back soon"])
   (if (errors? :username :email :pass :pass1 :captcha)
