@@ -59,7 +59,7 @@
   (layout-settings-x "/settings" {:enctype "multipart/form-data"}
     [:div.c
      [:p (label :portrait "Change your portrait, or remove your portrait to use a default one.")]
-     [:p (file-upload :portrait)]
+     [:p (file-upload {:accept "image/*"} :portrait)]
      [:p (label :default-portrait "Use a default portrait") (check-box :default-portrait)]
      [:p (on-error :portrait first)]]
     [:div.c

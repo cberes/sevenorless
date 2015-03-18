@@ -14,7 +14,7 @@
 (defn build-title [{:keys [link title]}]
   (if (nil? link)
     (if (nil? title) nil [:h3 title])
-    [:h3 (link-to link (if (nil? title) link title))]))
+    [:h3 (link-to link (if (nil? title) link title)) " \u26A1"]))
 
 (defn build-image [{:keys [image_id user_image_id]}]
   (when-not (nil? image_id)

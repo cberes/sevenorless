@@ -91,7 +91,7 @@
                  (label {:class "after-input"} :comments "Allow comments")]
                 [:p
                  (label :img "Image")
-                 (file-upload :img)]
+                 (file-upload {:accept "image/*"} :img)]
                 [:p.right (submit-button "Post")]
                 [:div.clear])])))
 
@@ -120,11 +120,12 @@
       (map item/format-item items))))
 
 (defn profile [logged-in-user username]
-  (let [user (db/find-user username)]
+  (if-let [user (db/find-user username)]
     (layout/common
       (profile-details logged-in-user user)
       (profile-publish logged-in-user user)
-      (profile-feed logged-in-user user))))
+      (profile-feed logged-in-user user))
+    (redirect "/")))
 
 (defn feed [user]
   (layout/common

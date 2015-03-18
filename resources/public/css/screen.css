@@ -109,7 +109,8 @@ div.i h3 {
   color: #A4AA82;
   font-size: 1.5em;
 }
-div.i h3 a, div.i h3 a:link, div.i h3 a:visited, div.i h3 a:hover, div.i h3 a:active {
+div.i h3 a, div.i h3 a:link, div.i h3 a:visited, div.i h3 a:hover, div.i h3 a:active,
+table#profile a, table#profile a:link, table#profile a:visited, table#profile a:hover, table#profile a:active {
   color: #A4AA82;
   text-decoration: none;
 }
