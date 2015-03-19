@@ -16,9 +16,10 @@
     (if (nil? title) nil [:h3 title])
     [:h3 (link-to link (if (nil? title) link title)) " \u26A1"]))
 
-(defn build-image [{:keys [image_id user_image_id]}]
+(defn build-image [{:keys [image_id user_image_id link]}]
   (when-not (nil? image_id)
-    (image {:class "b"} (str "/img/" image_id ".jpg"))))
+    (let [img-src (str "/img/" image_id ".jpg") img (image {:class "b"} img-src)]
+      (link-to (if (nil? link) img-src link) img))))
 
 (defn build-body [title body]
   (when-not (and (nil? title) (string/blank? body))
@@ -29,14 +30,10 @@
    (build-image item)
    (build-body (build-title item) (:body item))
    [:div.u
-    [:strong (link-to (str "/u/" (:username item)) (:username item))]
     (link-to (str "/u/" (:username item)) (image (if-not (nil? (:user_image_id item)) (str "/img/" (:user_image_id item) ".jpg") "/img/anon.png")))
-    [:br]
-    (format-time (:created item))
-    [:br]
-    [:br]
-    "tags"
-    [:div.clear]]])
+    [:strong (link-to (str "/u/" (:username item)) (:username item))]
+    [:span.item-time (format-time (:created item))]
+    [:div.tags "tags"]]])
 
 (defn format-item [item]
   (let [formatted-item (build-item item)]
