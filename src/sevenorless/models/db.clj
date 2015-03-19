@@ -188,8 +188,8 @@
 
 ; called as user who is being followed
 (defn deny-follow [id other-id]
-  (when (and (not= id other-id))
-    (sql/update! @db :pending_follow ["user_id = ? and followed_id = ?" other-id id] {:approved false})))
+  (when (not= id other-id)
+    (sql/update! @db :pending_follow {:approved false} ["user_id = ? and followed_id = ?" other-id id])))
 
 (defn daily-items-count [id]
   (:count (sql/query @db

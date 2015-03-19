@@ -121,8 +121,8 @@
 (defn handle-privacy-settings [user items]
   (let [id (:_id user) privacy {:items (= "public" items)}]
     (if-not (nil? (db/get-user-privacy id))
-      (db/update-user-privacy id items)
-      (db/add-user-privacy id (assoc privacy :user_id id))))
+      (db/update-user-privacy id privacy)
+      (db/add-user-privacy (assoc privacy :user_id id))))
   (privacy-settings user))
 
 (defroutes settings-routes
