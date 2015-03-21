@@ -79,7 +79,7 @@
                 [:p
                  (label :body "Body")
                  [:br]
-                 (text-area {:maxlength 4096} :body)]
+                 (text-area {:maxlength 4096 :class "rich"} :body)]
                 [:p
                  (label :link "Link")
                  [:br]

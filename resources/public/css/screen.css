@@ -107,20 +107,61 @@ div.i div.u a img {
   border-radius: 0.25em;
   vertical-align: middle;
 }
-div.i div.u div.tags {
-  font-size: 0.75em;
+div.i div.u div.m, div.i div.u div.f {
+  margin: 0 0 1em;
+  padding: 0.25em 0.5em;
+  border-radius: 0.25em;
+}
+div.i div.u div.m {
+  background: #E9E9E9;
+}
+div.i div.u div.f {
+  color: #F5F5F5;
+  background: #008584;
+  border: thin solid #006666;
+}
+div.i div.u p.tags {
+  font-size: 0.9em;
   line-height: 1.25;
-  float: right;
-  height: 2.5em;
-  overflow: hidden;
-  text-align: right;
+  margin: 0 0 0.5em;
 }
 div.i div.u span.item-time {
-  border-left: thin solid #CCCCCC;
   line-height: 2;
   float: right;
-  padding-left: 1em;
-  margin-left: 1em;
+}
+div.i div.u span.tag-count {
+  float: right;
+}
+table.add-comment, table.comments {
+  width: 100%;
+  border-spacing: 0;
+  padding: 0;
+}
+table.add-comment textarea {
+  height: 3em;
+  border: thin solid #006666;
+  border-radius: 0.25em;
+  background: #F5F5F5;
+}
+table.add-comment td.send {
+  vertical-align: top;
+  text-align: center;
+}
+table.comments td.icon img {
+  margin: 0;
+}
+table.comments td.author div {
+  font-weight: bold;
+  background: #F5F5F5;
+  border-radius: 0.25em;
+  padding: 0.25em 0.5em;
+  display: inline-block;
+}
+table.comments td.body div {
+  background: #006666;
+  border-radius: 0.25em;
+  padding: 0.25em 0.5em;
+  display: inline-block;
 }
 img#portrait {
   border-radius: 0.25em;

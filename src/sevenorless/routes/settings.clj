@@ -64,7 +64,7 @@
      [:p (on-error :portrait first)]]
     [:div.c
      [:p (label :bio "Enter a bio that will be displayed on your profile.")]
-     [:p (text-area {:maxlength 512} :bio (:bio (db/get-user-bio (:_id user))))]
+     [:p (text-area {:maxlength 512 :class "rich"} :bio (:bio (db/get-user-bio (:_id user))))]
      [:p.right (label :raw "Raw HTML editor")
                (check-box {:onchange "toggleTinyMce(this, 'bio');"} :raw)]
      [:p (on-error :bio first)]

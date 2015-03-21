@@ -1,6 +1,7 @@
 (ns sevenorless.models.item
   (:require [clojure.string :as string]
             [hiccup.element :refer [image link-to]]
+            [hiccup.form :refer [form-to text-area hidden-field submit-button]]
             [noir.cookies :as cookies]
             [noir.session :as session]
             [sevenorless.models.db :as db]))
@@ -25,15 +26,41 @@
   (when-not (and (nil? title) (string/blank? body))
     [:div.b title body]))
 
-(defn build-item [item]
+(defn build-comment [comment]
+  [:tr
+   [:td.icon (link-to "#" (image "/img/anon.png"))]
+   [:td.author [:div (link-to (str "/u/" "foo") "foo")]]
+   [:td.body [:div "Whoa, a comment!"]]])
+
+(defn build-comments [comments]
+  (if (empty? comments)
+    [:p "No comments yet"]
+    [:table.comments (map build-comment comments)]))
+
+(defn build-comment-form [id allow-comments?]
+  (when allow-comments?
+    (form-to {:onsubmit (str "return addComment(" id ", 'comments-" id "', this);")} [:post "/comment"]
+             (hidden-field "comment-item-id" id)
+             [:table.add-comment
+              [:tr
+               [:td (text-area {:maxlength 4096 :placeholder "comment"} :comment)]
+               [:td.send (submit-button "Send")]]])))
+
+(defn build-item [{:keys [_id user_image_id username created body comments] :as item}]
   [:div.i
    (build-image item)
-   (build-body (build-title item) (:body item))
+   (build-body (build-title item) body)
    [:div.u
-    (link-to (str "/u/" (:username item)) (image (if-not (nil? (:user_image_id item)) (str "/img/" (:user_image_id item) ".jpg") "/img/anon.png")))
-    [:strong (link-to (str "/u/" (:username item)) (:username item))]
-    [:span.item-time (format-time (:created item))]
-    [:div.tags "tags"]]])
+    [:div.m {:onclick (str "toggleComments(" _id ", 'comments-" _id "');")}
+     [:span.tag-count "0 tags"] "0 comments, +0, -0"]
+    [:div.f {:id (str "comments-" _id) :style "display: none;"}
+     [:p.tags "#tag1 #tag2 #tag3"]
+     (build-comment-form _id comments)
+     [:div.comments-placeholder "Loading comments"]]
+    [:div.a
+     (link-to (str "/u/" username) (image (if-not (nil? user_image_id) (str "/img/" user_image_id ".jpg") "/img/anon.png")))
+     [:strong (link-to (str "/u/" username) username)]
+     [:span.item-time (format-time created)]]]])
 
 (defn format-item [item]
   (let [formatted-item (build-item item)]

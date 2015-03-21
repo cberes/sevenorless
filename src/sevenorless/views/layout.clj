@@ -23,9 +23,10 @@
      (include-js "/js/tinymce/tinymce.min.js")
      (include-js "/js/jquery-2.1.3.min.js")
      (include-js "/js/tinymce-ext.js")
+     (include-js "/js/comments.js")
      (include-js "/js/follow.js")
      (include-js "https://www.google.com/recaptcha/api.js")
-     [:script "tinymce.init({ selector: \"textarea\" });"]]
+     [:script "tinymce.init({ selector: \"textarea.rich\" });"]]
     [:body
      [:div#menu (menu)]
      [:div.w
