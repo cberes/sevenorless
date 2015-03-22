@@ -1,16 +1,20 @@
 (ns sevenorless.models.item
   (:require [clojure.string :as string]
             [hiccup.element :refer [image link-to]]
-            [hiccup.form :refer [form-to text-area hidden-field submit-button]]
+            [hiccup.form :refer [form-to text-area submit-button]]
             [noir.cookies :as cookies]
             [noir.session :as session]
-            [sevenorless.models.db :as db]))
+            [sevenorless.models.db :as db]
+            [sevenorless.models.user :as user]))
 
 (defn format-time [time]
   (.format (java.text.SimpleDateFormat. "hh:mm aa, MMMM dd") time))
 
 (defn format-date [time]
   (.format (java.text.SimpleDateFormat. "MMM dd") time))
+
+(defn build-user-icon [id]
+  (image (if-not (nil? id) (str "/img/" id ".jpg") "/img/anon.png")))
 
 (defn build-title [{:keys [link title]}]
   (if (nil? link)
@@ -26,11 +30,11 @@
   (when-not (and (nil? title) (string/blank? body))
     [:div.b title body]))
 
-(defn build-comment [comment]
+(defn build-comment [{:keys [body created username user_image_id]}]
   [:tr
-   [:td.icon (link-to "#" (image "/img/anon.png"))]
-   [:td.author [:div (link-to (str "/u/" "foo") "foo")]]
-   [:td.body [:div "Whoa, a comment!"]]])
+   [:td.icon (link-to (str "/u/" username) (build-user-icon user_image_id))]
+   [:td.author [:div (link-to (str "/u/" username) username)]]
+   [:td.body [:div body]]])
 
 (defn build-comments [comments]
   (if (empty? comments)
@@ -39,26 +43,31 @@
 
 (defn build-comment-form [id allow-comments?]
   (when allow-comments?
-    (form-to {:onsubmit (str "return addComment(" id ", 'comments-" id "', this);")} [:post "/comment"]
-             (hidden-field "comment-item-id" id)
-             [:table.add-comment
-              [:tr
-               [:td (text-area {:maxlength 4096 :placeholder "comment"} :comment)]
-               [:td.send (submit-button "Send")]]])))
+    (if (nil? (user/get-user))
+      [:p "Login to add comments."]
+      (form-to {:onsubmit (str "return addComment(" id ", 'comments-" id "', this);")} [:post (str "/comments/" id)]
+               [:table.add-comment
+                [:tr
+                 [:td (text-area {:maxlength 4096 :placeholder "comment"} :comment)]
+                 [:td.send (submit-button "Send")]]]))))
 
-(defn build-item [{:keys [_id user_image_id username created body comments] :as item}]
+(defn build-tags [tags]
+  (when-not (string/blank? tags)
+    [:p.tags tags]))
+
+(defn build-item [{:keys [_id user_image_id username created body comments comments_count] :as item}]
   [:div.i
    (build-image item)
    (build-body (build-title item) body)
    [:div.u
     [:div.m {:onclick (str "toggleComments(" _id ", 'comments-" _id "');")}
-     [:span.tag-count "0 tags"] "0 comments, +0, -0"]
+     [:span.tag-count "0 tags"] (str comments_count " comment" (if (= 1 comments_count) "" "s"))]
     [:div.f {:id (str "comments-" _id) :style "display: none;"}
-     [:p.tags "#tag1 #tag2 #tag3"]
+     (build-tags nil)
      (build-comment-form _id comments)
-     [:div.comments-placeholder "Loading comments"]]
+     [:div.comments-placeholder [:p.loading "Loading comments"]]]
     [:div.a
-     (link-to (str "/u/" username) (image (if-not (nil? user_image_id) (str "/img/" user_image_id ".jpg") "/img/anon.png")))
+     (link-to (str "/u/" username) (build-user-icon user_image_id))
      [:strong (link-to (str "/u/" username) username)]
      [:span.item-time (format-time created)]]]])
 

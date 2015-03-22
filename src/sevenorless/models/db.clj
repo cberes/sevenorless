@@ -216,6 +216,7 @@
 (defn get-items [user-id offset limit]
   (sql/query @db
     ["select i.*, u.*, a.image_id as user_image_id,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
       join web_user u on i.user_id = u._id
@@ -232,6 +233,7 @@
 (defn get-follows-items [user-id offset limit]
   (sql/query @db
     ["select i.*, u.*, a.image_id as user_image_id,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
       join web_user u on i.user_id = u._id
@@ -247,6 +249,7 @@
 (defn get-users-items [user-id current-user-id offset limit]
   (sql/query @db
     ["select i.*, u.*, a.image_id as user_image_id,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
       join web_user u on i.user_id = u._id
@@ -288,3 +291,30 @@
 
 (defn delete-user-portrait [id]
   (sql/delete! @db :user_portrait ["user_id = ?" id]))
+
+(defn can-comment? [user-id item-id]
+  (not (nil?(sql/query @db
+              ["select i._id
+                from item i
+                left outer join user_privacy p on p.user_id = i.user_id
+                left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
+                where i._id = ? and i.comments
+                and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)" user-id item-id user-id]
+              :result-set-fn first))))
+
+(defn add-comment [{:keys [item_id user_id] :as comment}]
+  (when (can-comment? user_id item_id)
+    (sql/insert! @db :item_comment comment)))
+
+(defn get-comments [user-id item-id]
+  (sql/query @db
+    ["select c.*, u.username, a.image_id as user_image_id
+      from item_comment c
+      join web_user u on c.user_id = u._id
+      join item i on i._id = c.item_id
+      left outer join user_portrait a on c.user_id = a.user_id
+      left outer join user_privacy p on p.user_id = i.user_id
+      left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
+      where c.item_id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
+      order by c.created desc" user-id item-id user-id]
+    :result-set-fn doall))

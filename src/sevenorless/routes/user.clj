@@ -4,6 +4,7 @@
             [compojure.core :refer :all]
             [hiccup.element :refer [image link-to]]
             [hiccup.form :refer [form-to label text-area text-field file-upload hidden-field check-box submit-button]]
+            [hiccup.page :refer [html5]]
             [hiccup.util :refer [url-encode]]
             [noir.response :refer [redirect]]
             [noir.session :as session]
@@ -176,6 +177,15 @@
       (layout/simple title [:p "You have no followers pending your approval."])
       (layout/simple title [:table (map format-pending-follow records)]))))
 
+(defn comments [user id]
+  (html5 (item/build-comments (db/get-comments (if (nil? user) 0 (:_id user)) (Integer/parseInt id)))))
+
+(defn publish-comment [user id comment]
+  (when-not (string/blank? comment)
+    (let [item-id (Integer/parseInt id)]
+      (db/add-comment {:user_id (:_id user) :item_id item-id :body comment})
+      (html5 (item/build-comments (db/get-comments (:_id user) item-id))))))
+
 (defroutes user-routes
   (context "/u/:username" [username]
     (GET "/" [] (profile (user/get-user) username))
@@ -186,4 +196,6 @@
   (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) title body link img public comments)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user))))
-  (GET "/followers/pending" [] (restricted (pending-followers (user/get-user)))))
+  (GET "/followers/pending" [] (restricted (pending-followers (user/get-user))))
+  (GET "/comments/:id" [id] (comments (user/get-user) id))
+  (POST "/comments/:id" [id comment] (restricted (publish-comment (user/get-user) id comment))))

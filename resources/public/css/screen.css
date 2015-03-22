@@ -147,6 +147,9 @@ table.add-comment td.send {
   vertical-align: top;
   text-align: center;
 }
+table.comments {
+  margin: 0.5em 0 0;
+}
 table.comments td.icon img {
   margin: 0;
 }
