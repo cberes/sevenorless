@@ -27,25 +27,31 @@
 
 (defn get-user [id]
   (sql/query @db
-    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
+    ["select u.*, p.image_id, pi.ext as image_ext, COALESCE(y.items, TRUE) as items_public
+      from web_user u
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
+      left outer join image pi on p.image_id = pi._id
       where u._id = ?" id]
     :result-set-fn first))
 
 (defn find-user [username]
   (sql/query @db
-    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
+    ["select u.*, p.image_id, pi.ext as image_ext, COALESCE(y.items, TRUE) as items_public
+      from web_user u
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
+      left outer join image pi on p.image_id = pi._id
       where u.username ilike ?" username]
     :result-set-fn first))
 
 (defn find-user-by-email [email]
   (sql/query @db
-    ["select u.*, p.image_id, COALESCE(y.items, TRUE) as items_public from web_user u
+    ["select u.*, p.image_id, pi.ext as image_ext, COALESCE(y.items, TRUE) as items_public
+      from web_user u
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
+      left outer join image pi on p.image_id = pi._id
       where u.email ilike ?" email]
     :result-set-fn first))
 
@@ -215,13 +221,15 @@
 
 (defn get-items [user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id,
+    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
       (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
+      left outer join image ai on a.image_id = ai._id
       left outer join follow f on f.followed_id = u._id and f.user_id = ?
       where (i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?
       order by i.created desc, i._id asc
@@ -232,13 +240,15 @@
 ; privacy doesn't matter
 (defn get-follows-items [user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id,
+    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
       (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       join follow f on f.followed_id = u._id
       left outer join user_portrait a on u._id = a.user_id
+      left outer join image ai on a.image_id = ai._id
       where f.user_id = ?
       order by i.created desc, i._id asc
       limit ?" user-id limit]
@@ -248,13 +258,15 @@
 ; so consider only per-post privacy
 (defn get-users-items [user-id current-user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id,
+    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
       (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
       rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
+      left outer join image ai on a.image_id = ai._id
       left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
       where u._id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
       order by i.created desc, i._id asc
@@ -308,11 +320,12 @@
 
 (defn get-comments [user-id item-id]
   (sql/query @db
-    ["select c.*, u.username, a.image_id as user_image_id
+    ["select c.*, u.username, a.image_id as user_image_id, ai.ext as user_image_ext
       from item_comment c
       join web_user u on c.user_id = u._id
       join item i on i._id = c.item_id
       left outer join user_portrait a on c.user_id = a.user_id
+      left outer join image ai on a.image_id = ai._id
       left outer join user_privacy p on p.user_id = i.user_id
       left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
       where c.item_id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)

@@ -35,6 +35,7 @@ _id BIGSERIAL PRIMARY KEY
 ,user_id bigint NOT NULL references web_user(_id)
 ,name varchar(256)
 ,path varchar(256) NOT NULL
+,ext varchar(8) NOT NULL
 ,created timestamp DEFAULT current_timestamp
 ,public boolean DEFAULT TRUE
 );

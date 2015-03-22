@@ -13,26 +13,26 @@
 (defn format-date [time]
   (.format (java.text.SimpleDateFormat. "MMM dd") time))
 
-(defn build-user-icon [id]
-  (image (if-not (nil? id) (str "/img/" id ".jpg") "/img/anon.png")))
+(defn build-user-icon [id ext]
+  (image (if-not (nil? id) (str "/img/" id "." ext) "/img/anon.png")))
 
 (defn build-title [{:keys [link title]}]
   (if (nil? link)
     (if (nil? title) nil [:h3 title])
     [:h3 (link-to link (if (nil? title) link title)) " \u26A1"]))
 
-(defn build-image [{:keys [image_id user_image_id link]}]
+(defn build-image [{:keys [image_id image_ext link]}]
   (when-not (nil? image_id)
-    (let [img-src (str "/img/" image_id ".jpg") img (image {:class "b"} img-src)]
+    (let [img-src (str "/img/" image_id "." image_ext) img (image {:class "b"} img-src)]
       (link-to (if (nil? link) img-src link) img))))
 
 (defn build-body [title body]
   (when-not (and (nil? title) (string/blank? body))
     [:div.b title body]))
 
-(defn build-comment [{:keys [body created username user_image_id]}]
+(defn build-comment [{:keys [body created username user_image_id user_image_ext]}]
   [:tr
-   [:td.icon (link-to (str "/u/" username) (build-user-icon user_image_id))]
+   [:td.icon (link-to (str "/u/" username) (build-user-icon user_image_id user_image_ext))]
    [:td.author [:div (link-to (str "/u/" username) username)]]
    [:td.body [:div body]]])
 
@@ -55,7 +55,7 @@
   (when-not (string/blank? tags)
     [:p.tags tags]))
 
-(defn build-item [{:keys [_id user_image_id username created body comments comments_count] :as item}]
+(defn build-item [{:keys [_id user_image_id user_image_ext username created body comments comments_count] :as item}]
   [:div.i
    (build-image item)
    (build-body (build-title item) body)
@@ -67,7 +67,7 @@
      (build-comment-form _id comments)
      [:div.comments-placeholder [:p.loading "Loading comments"]]]
     [:div.a
-     (link-to (str "/u/" username) (build-user-icon user_image_id))
+     (link-to (str "/u/" username) (build-user-icon user_image_id user_image_ext))
      [:strong (link-to (str "/u/" username) username)]
      [:span.item-time (format-time created)]]]])
 

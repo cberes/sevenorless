@@ -20,14 +20,14 @@
     nil))
 
 (defn image-file-name [{user-id :_id} content-type]
-  (str user-id "_" (System/currentTimeMillis) "." (file-ext content-type)))
+  (str user-id "_" (System/currentTimeMillis)))
 
 (defn save-image [{:keys [content-type filename] :as file} user]
   (when-not (empty? filename)
-    (let [new-file-name (image-file-name user content-type) folder (image-store-path)]
+    (let [new-file-name (image-file-name user content-type) folder (image-store-path) ext (file-ext content-type)]
       (try
-        (upload-file folder (assoc file :filename new-file-name) :create-path? true)
-        (:_id (first (db/add-image {:user_id (:_id user) :path new-file-name})))
+        (upload-file folder (assoc file :filename (str new-file-name "." ext)) :create-path? true)
+        (:_id (first (db/add-image {:user_id (:_id user) :path new-file-name :ext ext})))
         (catch Exception ex
           (println (str "error uploading file: " (.getMessage ex))))))))
 
