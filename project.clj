@@ -11,7 +11,8 @@
                  [org.clojure/java.jdbc "0.3.6"]
                  [clojure.jdbc/clojure.jdbc-c3p0 "0.3.2"]
                  [clj-http "1.0.1"]
-                 [org.clojure/data.json "0.2.6"]]
+                 [org.clojure/data.json "0.2.6"]
+                 [com.drewnoakes/metadata-extractor "2.8.0"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler sevenorless.handler/app
          :init sevenorless.handler/init
