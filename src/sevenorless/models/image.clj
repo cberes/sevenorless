@@ -33,14 +33,13 @@
 (defn open-file [folder filename]
   (File. (File. folder) filename))
 
+(defn read-metadata [file]
 ;  (doseq [t (map #(.getTags %) (.getDirectories (ImageMetadataReader/readMetadata file)))]
 ;    (println t))
-
-(defn read-metadata [file]
   (.getFirstDirectoryOfType (ImageMetadataReader/readMetadata file) ExifIFD0Directory))
 
 (defn get-orientation [metadata]
-  (if metadata (.getInt metadata ExifIFD0Directory/TAG_ORIENTATION)) 0)
+  (if (.containsTag metadata ExifIFD0Directory/TAG_ORIENTATION) (.getInt metadata ExifIFD0Directory/TAG_ORIENTATION) 0))
 
 (defn to-op [t]
   (AffineTransformOp. t AffineTransformOp/TYPE_BILINEAR))
@@ -90,7 +89,7 @@
     (to-op t)))
 
 (defn build-transformation [metadata]
-  (case (get-orientation metadata)
+  (case (if metadata (get-orientation metadata) 0)
     2 {:transform flip-x :swap false}
     3 {:transform rotate-pi :swap false}
     4 {:transform flip-y :swap false}
