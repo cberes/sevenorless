@@ -13,10 +13,26 @@
                  [clj-http "1.0.1"]
                  [org.clojure/data.json "0.2.6"]
                  [com.drewnoakes/metadata-extractor "2.8.0"]]
-  :plugins [[lein-ring "0.8.12"]]
+  :plugins [[lein-ring "0.8.12"]
+            [lein-rpm "0.0.5"]]
   :ring {:handler sevenorless.handler/app
          :init sevenorless.handler/init
          :destroy sevenorless.handler/destroy}
+  :rpm {:name "Name"
+        :summary "7itemsorless.com"
+        :copyright "Corey A Beres"
+        :workarea "target"
+        :mappings [{:directory "/usr/local/bin/landfill"
+                    :filemode "440"
+                    :username "dumper"
+                    :groupname "dumpgroup"
+                    :preinstall {:scriptfile "script.sh"}
+                    :requires ["trash-truck > 1.0"]
+                    ;; There are also postinstall, preremove and postremove
+                    :sources {:source [{:location "target/classes"}
+                                       {:location "src"}]
+                              :softlinkSource [{:location "/usr/local/bin/new.sh"
+                                                :destination "old.sh"}]}}]}
   :profiles
   {:uberjar {:aot :all}
    :production

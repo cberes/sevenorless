@@ -1,7 +1,7 @@
 (ns sevenorless.util.settings
   (:require [clojure.java.io :refer [file reader resource]]))
 
-(def properties-file-name "config.properties")
+(def properties-file-name (System/getProperty "site.config" "config.properties"))
 
 (defn properties-file []
   (let [file (file properties-file-name)]
