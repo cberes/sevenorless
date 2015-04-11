@@ -42,9 +42,9 @@
     [:p "No comments yet"]
     [:table.comments (map build-comment comments)]))
 
-(defn build-comment-form [id allow-comments?]
+(defn build-comment-form [id user allow-comments?]
   (when allow-comments?
-    (if (nil? (user/get-user))
+    (if (nil? user)
       [:p "Login to add comments."]
       (form-to {:onsubmit (str "return addComment(" id ", 'comments-" id "', this);")} [:post (str "/comments/" id)]
                [:table.add-comment
@@ -56,8 +56,16 @@
   (when-not (string/blank? tags)
     [:p.tags tags]))
 
-(defn build-item [{:keys [_id user_image_id user_image_ext username created body comments comments_count] :as item}]
-  [:div.i
+(defn build-extras [id created allow-delete?]
+  [:div.item-extras-w {:id (str "item-" id "-extras") :style "display:none;" :onclick "hideItemExtras(this);"}
+   [:div.item-extras {:onclick "cancelHideItemExtras(this);"}
+    [:h4 (str "Item " id)]
+    [:p (str "Created " (format-time created))]
+    (when allow-delete? [:p (link-to {:onclick (str "return deleteItem(" id ", 'item-" id "', 'item-" id "-extras');")} "#" "Delete item")])]])
+
+(defn build-item [{:keys [_id user_id user_image_id user_image_ext username created body comments comments_count] :as item} user]
+  [:div.i {:id (str "item-" _id)}
+   (build-extras _id created (and (not (nil? user)) (= (:_id user) user_id)))
    (build-image item)
    (build-body (build-title item) body)
    [:div.u
@@ -65,16 +73,16 @@
      [:span.tag-count "0 tags"] (str comments_count " comment" (if (= 1 comments_count) "" "s"))]
     [:div.f {:id (str "comments-" _id) :style "display: none;"}
      (build-tags nil)
-     (build-comment-form _id comments)
+     (build-comment-form _id user comments)
      [:div.comments-placeholder [:p.loading "Loading comments"]]]
     [:div.a
      (link-to (str "/u/" username) (build-user-icon user_image_id user_image_ext))
      [:strong (link-to (str "/u/" username) username)]
-     [:span.item-extra {:onclick (str "return deleteItem(" _id ", this.parentNode.parentNode.parentNode);")} "+"]
+     [:span.item-extra {:onclick (str "return showItemExtras('item-" _id "-extras');")} "+"]
      [:span.item-time (format-time created)]]]])
 
 (defn format-item [item]
-  (let [formatted-item (build-item item)]
+  (let [formatted-item (build-item item (user/get-user))]
     (if (= (:rank item) 1)
       (list [:h2 (format-date (:created item))] formatted-item)
       formatted-item)))

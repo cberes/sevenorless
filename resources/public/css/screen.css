@@ -174,6 +174,30 @@ table.comments td.body div {
   padding: 0.25em 0.5em;
   display: inline-block;
 }
+div.item-extras-w {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 133, 132, 0.5);
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+div.item-extras {
+  position: relative;
+  top: 45%;
+  left: 0;
+  width: 50%;
+  min-width: 20em;
+  margin: 0 auto;
+  padding: 1em;
+  border-radius: 0.5em;
+  border: thin solid #000000;
+  background: #E9E9E9;
+}
 img#portrait {
   border-radius: 0.25em;
 }
