@@ -1,0 +1,55 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          sevenorless
+# Required-Start:    $local_fs $network $progd $time $syslog
+# Required-Stop:     $local_fs $network $progd $time $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       7itemsorless.com
+### END INIT INFO
+
+. /etc/init.d/functions
+
+prog=sevenorless
+runas=sevenorless
+
+pidfile=/var/run/$prog.pid
+lockfile=/var/lock/subsys/$prog
+
+start() {
+  echo -n $"Starting $prog: "
+  pidfile_temp=$(sudo -u $runas mktemp)
+  daemon --check $prog --user $runas --pidfile $pidfile /opt/$prog/start.sh $pidfile_temp
+  RETVAL=$?
+  echo
+  cp $pidfile_temp $pidfile
+  [ $RETVAL -eq 0 ] && touch $lockfile
+  return $RETVAL
+}
+
+stop() {
+  echo -n $"Shutting down $prog: "
+  killproc -p $pidfile $prog
+  RETVAL=$?
+  echo
+  [ $RETVAL -eq 0 ] && rm -f $lockfile
+  return $RETVAL
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    echo -n $prog; status -p $pidfile -l $prog
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+esac
