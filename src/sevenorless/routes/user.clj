@@ -202,4 +202,7 @@
   (GET "/following" [] (restricted (following (user/get-user))))
   (GET "/followers/pending" [] (restricted (pending-followers (user/get-user))))
   (GET "/comments/:id" [id] (comments (user/get-user) id))
-  (POST "/comments/:id" [id comment] (restricted (publish-comment (user/get-user) id comment))))
+  (POST "/comments/:id" [id comment] (restricted (publish-comment (user/get-user) id comment)))
+  (context "/i/:id" [id]
+    (GET "/" [] (redirect "/"))
+    (DELETE "/" [] (restricted (item/delete-item (Integer/parseInt id) (user/get-user))))))

@@ -25,6 +25,7 @@
      (include-js "/js/tinymce-ext.js")
      (include-js "/js/comments.js")
      (include-js "/js/follow.js")
+     (include-js "/js/item.js")
      (include-js "https://www.google.com/recaptcha/api.js")
      [:script "tinymce.init({ selector: \"textarea.rich\" });"]]
     [:body

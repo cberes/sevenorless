@@ -5,6 +5,7 @@
             [noir.cookies :as cookies]
             [noir.session :as session]
             [sevenorless.models.db :as db]
+            [sevenorless.models.image :as image]
             [sevenorless.models.user :as user]))
 
 (defn format-time [time]
@@ -69,6 +70,7 @@
     [:div.a
      (link-to (str "/u/" username) (build-user-icon user_image_id user_image_ext))
      [:strong (link-to (str "/u/" username) username)]
+     [:span.item-extra {:onclick (str "return deleteItem(" _id ", this.parentNode.parentNode.parentNode);")} "+"]
      [:span.item-time (format-time created)]]]])
 
 (defn format-item [item]
@@ -76,3 +78,10 @@
     (if (= (:rank item) 1)
       (list [:h2 (format-date (:created item))] formatted-item)
       formatted-item)))
+
+(defn delete-item [id user]
+  (let [user-id (:_id user) item (db/get-item id user-id)]
+    (when item
+      (db/delete-item-extras id)
+      (db/delete-item id user-id)
+      (image/delete-image (:image_id item) user-id))))

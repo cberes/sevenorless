@@ -210,11 +210,28 @@
     ["select * from image where _id = ?" id]
     :result-set-fn first))
 
-(defn delete-image [id]
-  (sql/delete! @db :image ["_id = ?" id]))
+(defn get-user-image [id user-id]
+  (sql/query @db
+    ["select * from image where _id = ? and user_id = ?" id user-id]
+    :result-set-fn first))
+
+(defn delete-image [id user-id]
+  (sql/delete! @db :image ["_id = ? and user_id = ?" id user-id]))
+
+(defn delete-item-extras [id]
+  (sql/delete! @db :item_bias ["item_id = ?" id])
+  (sql/delete! @db :item_comment ["item_id = ?" id]))
+
+(defn delete-item [id user-id]
+  (sql/delete! @db :item ["_id = ? and user_id = ?" id user-id]))
 
 (defn add-item [item]
   (sql/insert! @db :item item))
+
+(defn get-item [id user-id]
+  (sql/query @db
+    ["select * from item where _id = ? and user_id = ?" id user-id]
+    :result-set-fn first))
 
 (def page-filter-clause
   " and (i.created < ? or (i.created =  and i._id > ?))")

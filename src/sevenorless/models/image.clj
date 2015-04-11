@@ -126,8 +126,8 @@
       (rotate-image folder filename ext)
       (:_id (first (db/add-image {:user_id (:_id user) :path new-file-name :ext ext}))))))
 
-(defn delete-image [id]
+(defn delete-image [id user-id]
   (when-not (nil? id)
-    (when-let [img (db/get-image id)]
+    (when-let [img (db/get-user-image id user-id)]
       (io/delete-file (str (image-store-path) File/separator (:path img)) true)
-      (db/delete-image id))))
+      (db/delete-image id user-id))))

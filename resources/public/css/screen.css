@@ -125,6 +125,14 @@ div.i div.u p.tags {
   line-height: 1.25;
   margin: 0 0 0.5em;
 }
+div.i div.u span.item-extra {
+  line-height: 2;
+  float: right;
+  padding-left: 1em;
+}
+div.i div.u span.item-extra:hover {
+  cursor: pointer;
+}
 div.i div.u span.item-time {
   line-height: 2;
   float: right;
