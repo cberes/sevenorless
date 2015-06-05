@@ -19,6 +19,7 @@
   (:import [java.io File]))
 
 (def title "Settings")
+(def portait-length 500)
 
 (defn control [field name text & [attrs]]
   (list [:tr
@@ -106,9 +107,9 @@
     ; delete current portrait
     (when (or (not (empty? filename)) default-portrait)
       (db/delete-user-portrait id)
-      (image/delete-image (:image_id user)))
+      (image/delete-image (:image_id user) (:_id user)))
     ; save new portrait
-    (if-let [image-id (image/save-image portrait user)]
+    (if-let [image-id (image/save-image portrait user portait-length)]
       (db/add-user-portrait {:user_id id :image_id image-id}))
     ; save bio
     (if-not (nil? (db/get-user-bio id))

@@ -99,31 +99,57 @@
     8 {:transform rotate-pi2 :swap true}
     nil))
 
-(defn height [img swap]
-  (if swap (.getWidth img) (.getHeight img)))
-
-(defn width [img swap]
-  (if swap (.getHeight img) (.getWidth img)))
-
 (defn rotate-image [folder filename type]
   (let [file (open-file folder filename)
         src (ImageIO/read file)
+        h (.getHeight src)
+        w (.getWidth src)
         metadata (read-metadata file)
         t (build-transformation metadata)
         transform (:transform t)
         swap (:swap t)]
-    (when transform
-      (ImageIO/write (.filter
-                       (transform (.getHeight src) (.getWidth src))
-                       (ImageIO/read file)
-                       (BufferedImage. (width src swap) (height src swap) (.getType src)))
-                     type file))))
+    (if-not transform
+      true
+      (ImageIO/write
+        (.filter
+          (transform h w)
+          src
+          (BufferedImage. (if swap h w) (if swap w h) (.getType src)))
+        type
+        file))))
 
-(defn save-image [{:keys [content-type filename] :as file} user]
+; crops an image to a square (if necessary)
+; then shrinks the image to sides of the specified length (if necessary)
+(defn shrink-image [folder filename type max-length]
+  (let [file (open-file folder filename)
+        src (ImageIO/read file)
+        src-height (.getHeight src)
+        src-width (.getWidth src)]
+    (if (and (= max-length src-height) (= max-length src-width))
+      true
+      (let [length (min src-height src-width)
+            cropped (.getSubimage src (quot (- src-width length) 2) (quot (- src-height length) 2) length length)
+            ratio (double (/ max-length length))
+            scale (AffineTransform/getScaleInstance ratio ratio)]
+        (ImageIO/write
+          (if (< length max-length)
+            cropped
+            (.filter
+              (to-op scale)
+              cropped
+              (BufferedImage. max-length max-length (.getType src))))
+          type
+          file)))))
+
+(defn save-image [{:keys [content-type filename] :as file} user & [max-length]]
   (when-not (empty? filename)
-    (let [folder (image-store-path) new-file-name (image-file-name user content-type) ext (file-ext content-type) filename (str new-file-name "." ext)]
+    (let [folder (image-store-path)
+          new-file-name (image-file-name user content-type)
+          ext (file-ext content-type)
+          filename (str new-file-name "." ext)]
       (upload-file folder (assoc file :filename filename) :create-path? true)
       (rotate-image folder filename ext)
+      (when max-length (shrink-image folder filename ext max-length))
       (:_id (first (db/add-image {:user_id (:_id user) :path new-file-name :ext ext}))))))
 
 (defn delete-image [id user-id]
