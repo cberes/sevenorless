@@ -35,14 +35,16 @@
       where u._id = ?" id]
     :result-set-fn first))
 
-(defn find-user [username]
+(defn find-user [username & [my-id]]
   (sql/query @db
-    ["select u.*, p.image_id, pi.ext as image_ext, COALESCE(y.items, TRUE) as items_public
+    ["select u.*, p.image_id, pi.ext as image_ext, COALESCE(y.items, TRUE) as items_public,
+      u.created AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(my.tz, 'America/New_York') AS created_local
       from web_user u
+      left outer join web_user my on my._id = ?
       left outer join user_portrait p on u._id = p.user_id
       left outer join user_privacy y on u._id = y.user_id
       left outer join image pi on p.image_id = pi._id
-      where u.username ilike ?" username]
+      where u.username ilike ?" (or my-id 0) username]
     :result-set-fn first))
 
 (defn find-user-by-email [email]
@@ -126,15 +128,23 @@
 
 (defn get-follows [id]
   (sql/query @db
-    ["select u._id, u.username, f.created from web_user u join follow f on f.followed_id = u._id where f.user_id = ? order by u.username" id]
+    ["select u._id, u.username,
+      f.created AT TIME ZONE 'UTC' AT TIME ZONE my.tz AS created
+      from web_user u
+      join follow f on f.followed_id = u._id
+      join web_user my on my._id = ?
+      where f.user_id = my._id
+      order by u.username" id]
     :result-set-fn doall))
 
 (defn get-pending-followers [id]
   (sql/query @db
-    ["select u._id, u.username, f.created
+    ["select u._id, u.username,
+      f.created AT TIME ZONE 'UTC' AT TIME ZONE my.tz AS created
       from web_user u
       join pending_follow f on f.user_id = u._id
-      where f.followed_id = ? and f.approved is null
+      join web_user my on my._id = ?
+      where f.followed_id = my._id and f.approved is null
       order by date_trunc('day', f.created) desc, u.username" id]
     :result-set-fn doall))
 
@@ -177,7 +187,11 @@
 ; called as user who wants to follow another user
 (defn follow-pending? [id other-id]
   (sql/query @db
-    ["select u._id, u.username, f.created from pending_follow f join web_user u on f.followed_id = u._id where f.user_id = ? and f.followed_id = ? and (f.approved is null or f.created >= (NOW() - INTERVAL '1 month'))" id other-id]
+    ["select u._id, u.username, f.created
+      from pending_follow f
+      join web_user u on f.followed_id = u._id
+      where f.user_id = ? and f.followed_id = ?
+      and (f.approved is null or f.created >= (NOW() - INTERVAL '1 month'))" id other-id]
     :result-set-fn first))
 
 ; called as user who wants to follow another user
@@ -234,39 +248,51 @@
     :result-set-fn first))
 
 (def page-filter-clause
-  " and (i.created < ? or (i.created =  and i._id > ?))")
+  " and (i.created < ? or (i.created = ? and i._id > ?))")
 
 (defn get-items [user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
-      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
-      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+    ["select i._id, i.user_id, i.image_id, i.title, i.body, i.link, i.public, i.comments,
+      i.created AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(my.tz, 'America/New_York') AS created,
+      u.username, u.email,
+      a.image_id AS user_image_id, ai.ext AS user_image_ext, ii.ext AS image_ext,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) AS comments_count,
+      rank() OVER (PARTITION BY
+      date_trunc('day', i.created AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(my.tz, 'America/New_York'))
+      ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join web_user my on my._id = ?
       left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
       left outer join image ai on a.image_id = ai._id
-      left outer join follow f on f.followed_id = u._id and f.user_id = ?
-      where (i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?
+      left outer join follow f on f.followed_id = u._id and f.user_id = my._id
+      where (i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = my._id
       order by i.created desc, i._id asc
-      limit ?" user-id user-id limit]
+      limit ?" user-id limit]
     :result-set-fn doall))
 
 ; posts by those who user follows
 ; privacy doesn't matter
 (defn get-follows-items [user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
-      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
-      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+    ["select i._id, i.user_id, i.image_id, i.title, i.body, i.link, i.public, i.comments,
+      i.created AT TIME ZONE 'UTC' AT TIME ZONE my.tz AS created,
+      u.username, u.email,
+      a.image_id AS user_image_id, ai.ext AS user_image_ext, ii.ext AS image_ext,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) AS comments_count,
+      rank() OVER (PARTITION BY
+      date_trunc('day', i.created AT TIME ZONE 'UTC' AT TIME ZONE my.tz)
+      ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join web_user my on my._id = ?
       left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       join follow f on f.followed_id = u._id
       left outer join user_portrait a on u._id = a.user_id
       left outer join image ai on a.image_id = ai._id
-      where f.user_id = ?
+      where f.user_id = my._id
       order by i.created desc, i._id asc
       limit ?" user-id limit]
     :result-set-fn doall))
@@ -275,19 +301,25 @@
 ; so consider only per-post privacy
 (defn get-users-items [user-id current-user-id offset limit]
   (sql/query @db
-    ["select i.*, u.*, a.image_id as user_image_id, ai.ext as user_image_ext, ii.ext as image_ext,
-      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) as comments_count,
-      rank() OVER (PARTITION BY date_trunc('day', i.created) ORDER BY i.created DESC, i._id ASC)
+    ["select i._id, i.user_id, i.image_id, i.title, i.body, i.link, i.public, i.comments,
+      i.created AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(my.tz, 'America/New_York') AS created,
+      u.username, u.email,
+      a.image_id AS user_image_id, ai.ext AS user_image_ext, ii.ext AS image_ext,
+      (select coalesce(count(*), 0) from item_comment c where c.item_id = i._id) AS comments_count,
+      rank() OVER (PARTITION BY
+      date_trunc('day', i.created AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(my.tz, 'America/New_York'))
+      ORDER BY i.created DESC, i._id ASC)
       from item i
+      left outer join web_user my on my._id = ?
       left outer join image ii on i.image_id = ii._id
       join web_user u on i.user_id = u._id
       left outer join user_privacy p on p.user_id = u._id
       left outer join user_portrait a on u._id = a.user_id
       left outer join image ai on a.image_id = ai._id
-      left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
-      where u._id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
+      left outer join follow f on f.followed_id = i.user_id and f.user_id = my._id
+      where u._id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = my._id)
       order by i.created desc, i._id asc
-      limit ?" current-user-id user-id current-user-id limit]
+      limit ?" current-user-id user-id limit]
     :result-set-fn doall))
 
 (defn get-user-privacy [id]
@@ -325,10 +357,11 @@
   (not (nil?(sql/query @db
               ["select i._id
                 from item i
+                left outer join web_user my on my._id = ?
                 left outer join user_privacy p on p.user_id = i.user_id
-                left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
+                left outer join follow f on f.followed_id = i.user_id and f.user_id = my._id
                 where i._id = ? and i.comments
-                and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)" user-id item-id user-id]
+                and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = my._id)" user-id item-id]
               :result-set-fn first))))
 
 (defn add-comment [{:keys [item_id user_id] :as comment}]
@@ -339,14 +372,15 @@
   (sql/query @db
     ["select c.*, u.username, a.image_id as user_image_id, ai.ext as user_image_ext
       from item_comment c
+      left outer join web_user my on my._id = ?
       join web_user u on c.user_id = u._id
       join item i on i._id = c.item_id
       left outer join user_portrait a on c.user_id = a.user_id
       left outer join image ai on a.image_id = ai._id
       left outer join user_privacy p on p.user_id = i.user_id
-      left outer join follow f on f.followed_id = i.user_id and f.user_id = ?
-      where c.item_id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
-      order by c.created desc" user-id item-id user-id]
+      left outer join follow f on f.followed_id = i.user_id and f.user_id = my._id
+      where c.item_id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = my._id)
+      order by c.created desc" user-id item-id]
     :result-set-fn doall))
 
 (defn get-time-zones []

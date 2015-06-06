@@ -47,7 +47,7 @@
       [:table#profile
         [:tr [:td {:colspan 4 :style "text-align: right;"} (details-follow-link logged-in-user user)]]
         [:tr [:th "User"] [:td (:username user)] [:th "Followers"] [:td (db/followers-count (:_id user))]]
-        [:tr [:th "Joined"] [:td (format-date (:created user))] [:th (following-link logged-in-user user)] [:td (db/following-count (:_id user))]]
+        [:tr [:th "Joined"] [:td (format-date (:created_local user))] [:th (following-link logged-in-user user)] [:td (db/following-count (:_id user))]]
         (meta-link logged-in-user user)]
       (when-let [bio (:bio (db/get-user-bio (:_id user)))]
         [:div#profile-bio bio])
@@ -125,7 +125,7 @@
       (map item/format-item items))))
 
 (defn profile [logged-in-user username]
-  (if-let [user (db/find-user username)]
+  (if-let [user (db/find-user username (:_id logged-in-user))]
     (layout/common
       (profile-details logged-in-user user)
       (profile-publish logged-in-user user)
