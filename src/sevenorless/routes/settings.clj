@@ -3,7 +3,8 @@
             [clojure.string :as string]
             [compojure.core :refer :all]
             [hiccup.element :refer [image link-to]]
-            [hiccup.form :refer [form-to label text-area text-field password-field file-upload hidden-field check-box radio-button submit-button]]
+            [hiccup.form :refer [form-to label text-area text-field password-field file-upload
+                                 hidden-field check-box radio-button drop-down submit-button]]
             [hiccup.util :refer [url-encode]]
             [noir.io :refer [upload-file resource-path]]
             [noir.response :refer [redirect]]
@@ -47,6 +48,11 @@
   (layout-settings "/settings/account"
     [:div.c
      [:table
+       [:tr [:td {:colspan 3} "Change your timezone."]]
+       [:tr
+        [:th (label :timezone "Timezone")]
+        [:td (drop-down :timezone (db/get-time-zones) (:tz user))]
+        [:td.error (on-error :timezone first)]]
        [:tr [:td {:colspan 3} "Change your username. Your username is currently " [:strong (:username user)]]]
        (control text-field :username "New username" {:maxlength 20})
        [:tr [:td {:colspan 3} "Change your email address. Your email address currrently on file is " [:strong (:email user)]]]
@@ -82,7 +88,7 @@
                  [:label (radio-button :items (not (or (nil? privacy) (:items privacy))) "private") "private"]]
             [:td.error (on-error :items first)]]]])))
 
-(defn handle-account-settings [user username email pass pass1 old-pass]
+(defn handle-account-settings [user username email pass pass1 old-pass timezone]
   ; validation
   (when-not (string/blank? pass)
     (user/validate-password pass pass1)
@@ -92,15 +98,17 @@
     (user/validate-username username (:_id user)))
   (when-not (string/blank? email)
     (user/validate-email email))
+  (rule (db/is-time-zone? timezone)
+        [:timezone "invalid timezone"])
   ; update user
-  (when-not (errors? :username :email :pass :pass1 :old-pass)
+  (when-not (errors? :username :email :pass :pass1 :old-pass :timezone)
     (when-not (string/blank? email)
       (user/send-verify-email user (db/update-user-email (:_id user) email)))
-    (when-not (string/blank? username)
-      (db/update-user (:_id user) {:username username}))
-    (when-not (string/blank? pass)
-      (db/update-user (:_id user) {:password (crypt/encrypt pass)})))
-  (account-settings user))
+    (when-let [updates (conj {:tz timezone}
+                             (when-not (string/blank? username) {:username username})
+                             (when-not (string/blank? pass) {:password (crypt/encrypt pass)}))]
+      (db/update-user (:_id user) updates)))
+  (account-settings (db/get-user (:_id user))))
 
 (defn handle-profile-settings [user bio-text {:keys [filename] :as portrait} default-portrait]
   (let [id (:_id user) bio (if-not (string/blank? bio-text) bio-text nil) bio-row {:bio bio}]
@@ -117,14 +125,14 @@
         (db/update-user-bio id bio-row)
         (db/delete-user-bio id))
       (when-not (nil? bio) (db/add-user-bio (assoc bio-row :user_id id)))))
-  (profile-settings user))
+  (profile-settings (db/get-user (:_id user))))
 
 (defn handle-privacy-settings [user items]
   (let [id (:_id user) privacy {:items (= "public" items)}]
     (if-not (nil? (db/get-user-privacy id))
       (db/update-user-privacy id privacy)
       (db/add-user-privacy (assoc privacy :user_id id))))
-  (privacy-settings user))
+  (privacy-settings (db/get-user (:_id user))))
 
 (defroutes settings-routes
   (context "/settings" []
@@ -133,4 +141,4 @@
     (GET "/privacy" [] (restricted (privacy-settings (user/get-user))))
     (POST "/privacy" [items] (restricted (handle-privacy-settings (user/get-user) items)))
     (GET "/account" [] (restricted (account-settings (user/get-user)))) ; password, email, privacy
-    (POST "/account" [username email pass pass1 old-pass] (restricted (handle-account-settings (user/get-user) username email pass pass1 old-pass)))))
+    (POST "/account" [username email pass pass1 old-pass timezone] (restricted (handle-account-settings (user/get-user) username email pass pass1 old-pass timezone)))))

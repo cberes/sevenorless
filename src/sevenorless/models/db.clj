@@ -348,3 +348,9 @@
       where c.item_id = ? and ((i.public and (p.items is null or p.items)) or f.created is not null or i.user_id = ?)
       order by c.created desc" user-id item-id user-id]
     :result-set-fn doall))
+
+(defn get-time-zones []
+  (sql/query @db ["select name from pg_timezone_names order by name"] :row-fn :name))
+
+(defn is-time-zone? [name]
+  (first (sql/query @db ["select abbrev from pg_timezone_names where name = ? limit 1" name] :row-fn :abbrev)))

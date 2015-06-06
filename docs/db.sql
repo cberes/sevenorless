@@ -19,16 +19,20 @@ _id BIGSERIAL PRIMARY KEY
 ,username varchar(20) NOT NULL UNIQUE
 ,password varchar(200) NOT NULL
 ,email varchar(100) NOT NULL UNIQUE
+,tz varchar(50) NOT NULL
 ,created timestamp DEFAULT current_timestamp
 ,activated timestamp
 ,deactivated timestamp
 );
 INSERT INTO web_user (username, password, email) VALUES
-    ('admin', 'x', 'admin@7itemsorless.com'),
-    ('help', 'x', 'help@7itemsorless.com'),
-    ('info', 'x', 'info@7itemsorless.com'),
-    ('7itemsorless', 'x', '7itemsorless@7itemsorless.com'),
-    ('sevenitemsorless', 'x', 'sevenitemsorless@7itemsorless.com');
+    ('admin', 'x', 'admin@7itemsorless.com', 'America/New_York'),
+    ('help', 'x', 'help@7itemsorless.com', 'America/New_York'),
+    ('info', 'x', 'info@7itemsorless.com', 'America/New_York'),
+    ('7itemsorless', 'x', '7itemsorless@7itemsorless.com', 'America/New_York'),
+    ('sevenitemsorless', 'x', 'sevenitemsorless@7itemsorless.com', 'America/New_York');
+
+ALTER TABLE web_user ADD COLUMN tz varchar(50) NOT NULL DEFAULT 'America/New_York';
+ALTER TABLE web_user ALTER COLUMN tz DROP DEFAULT;
 
 CREATE TABLE IF NOT EXISTS image (
 _id BIGSERIAL PRIMARY KEY

@@ -17,6 +17,9 @@
 ;; 2 weeks (in seconds)
 (def cookie-max-age (* 14 86400))
 
+;; Default timezone
+(def default-tz "America/New_York")
+
 (defn control [field name text & [attrs]]
   (list [:tr
          [:th (label name text)]
@@ -117,7 +120,7 @@
   (if (errors? :username :email :pass :pass1 :captcha)
     (registration-page)
     (do
-      (db/add-user {:username username :email email :password (crypt/encrypt pass)})
+      (db/add-user {:username username :email email :password (crypt/encrypt pass) :tz default-tz})
       ; TODO kind of stupid that we have to query for the user right away
       (let [user (db/find-user username)]
         (user/send-verify-email user (db/create-email-verify-record user))
