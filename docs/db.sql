@@ -31,9 +31,6 @@ INSERT INTO web_user (username, password, email) VALUES
     ('7itemsorless', 'x', '7itemsorless@7itemsorless.com', 'America/New_York'),
     ('sevenitemsorless', 'x', 'sevenitemsorless@7itemsorless.com', 'America/New_York');
 
-ALTER TABLE web_user ADD COLUMN tz varchar(50) NOT NULL DEFAULT 'America/New_York';
-ALTER TABLE web_user ALTER COLUMN tz DROP DEFAULT;
-
 CREATE TABLE IF NOT EXISTS image (
 _id BIGSERIAL PRIMARY KEY
 ,user_id bigint NOT NULL references web_user(_id)
