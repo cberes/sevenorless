@@ -115,7 +115,7 @@
                  (string/blank? link)
                  (empty? (:filename file)))
     (try
-      (let [item-id (Integer/parseInt id)
+      (let [item-id (if id (Integer/parseInt id) nil)
             user-id (:_id user)
             item {:user_id user-id
                   :title (if (string/blank? title) nil title)
