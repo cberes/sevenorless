@@ -56,16 +56,17 @@
   (when-not (string/blank? tags)
     [:p.tags tags]))
 
-(defn build-extras [id created allow-delete?]
+(defn build-extras [id created username editable?]
   [:div.item-extras-w {:id (str "item-" id "-extras") :style "display:none;" :onclick "hideItemExtras(this);"}
    [:div.item-extras {:onclick "cancelHideItemExtras(this);"}
     [:h4 (str "Item " id)]
     [:p (str "Created " (format-time created))]
-    (when allow-delete? [:p (link-to {:onclick (str "return deleteItem(" id ", 'item-" id "', 'item-" id "-extras');")} "#" "Delete item")])]])
+    (when editable? [:p (link-to (str "/u/" username "?item=" id) "Edit item")])
+    (when editable? [:p (link-to {:onclick (str "return deleteItem(" id ", 'item-" id "', 'item-" id "-extras');")} "#" "Delete item")])]])
 
 (defn build-item [{:keys [_id user_id user_image_id user_image_ext username created body comments comments_count] :as item} user]
   [:div.i {:id (str "item-" _id)}
-   (build-extras _id created (and (not (nil? user)) (= (:_id user) user_id)))
+   (build-extras _id created username (and (not (nil? user)) (= (:_id user) user_id)))
    (build-image item)
    (build-body (build-title item) body)
    [:div.u

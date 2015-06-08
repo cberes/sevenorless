@@ -242,6 +242,9 @@
 (defn add-item [item]
   (sql/insert! @db :item item))
 
+(defn update-item [id updates]
+  (sql/update! @db :item updates ["_id = ?" id]))
+
 (defn get-item [id user-id]
   (sql/query @db
     ["select * from item where _id = ? and user_id = ?" id user-id]

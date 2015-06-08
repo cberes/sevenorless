@@ -62,52 +62,72 @@
 (defn own-profile? [logged-in-user user]
   (and (not (nil? logged-in-user)) (= (:_id user) (:_id logged-in-user))))
 
-(defn profile-publish [logged-in-user user]
+(defn profile-publish [logged-in-user user item-id]
   (when (own-profile? logged-in-user user)
-    (list
-      [:h2 "Publish"]
-      [:div.c
-       [:p (post-count-message (:_id user))]
-       [:p "You can enter a title, body, link, and/or image. Each field is optional, but you need to enter at least one."]
-       (form-to {:id "publish" :enctype "multipart/form-data"} [:post "/publish"]
-                [:p
-                 (label :title "Title")
-                 [:br]
-                 (text-field {:maxlength 256} :title)]
-                [:p.right
-                 (label :raw "Raw HTML editor")
-                 (check-box {:onchange "toggleTinyMce(this, 'body');"} :raw)]
-                [:p
-                 (label :body "Body")
-                 [:br]
-                 (text-area {:maxlength 4096 :class "rich"} :body)]
-                [:p
-                 (label :link "Link")
-                 [:br]
-                 (text-field {:maxlength 2048} :link)]
-                [:p.right
-                 (check-box :public true)
-                 (label {:class "after-input"} :public "Public")
-                 (check-box :comments true)
-                 (label {:class "after-input"} :comments "Allow comments")]
-                [:p
-                 (label :img "Image")
-                 (file-upload {:accept "image/*"} :img)]
-                [:p.right (submit-button "Post")]
-                [:div.clear])])))
+    (let [item (when item-id (db/get-item (Integer/parseInt item-id) (:_id user)))]
+      (list
+        [:h2 (if item-id "Edit" "Publish")]
+        [:div.c
+         [:p (post-count-message (:_id user))]
+         [:p "You can enter a title, body, link, and/or image. Each field is optional, but you need to enter at least one."]
+         (form-to {:id "publish" :enctype "multipart/form-data"} [:post (if item-id (str "/edit/" item-id) "/publish")]
+                  [:p
+                   (label :title "Title")
+                   [:br]
+                   (text-field {:maxlength 256} :title (:title item))]
+                  [:p.right
+                   (label :raw "Raw HTML editor")
+                   (check-box {:onchange "toggleTinyMce(this, 'body');"} :raw)]
+                  [:p
+                   (label :body "Body")
+                   [:br]
+                   (text-area {:maxlength 4096 :class "rich"} :body (:body item))]
+                  [:p
+                   (label :link "Link")
+                   [:br]
+                   (text-field {:maxlength 2048} :link (:link item))]
+                  [:p.right
+                   ; default checkbox to true
+                   (check-box :public (if item (:public item) true))
+                   (label {:class "after-input"} :public "Public")
+                   ; default checkbox to true
+                   (check-box :comments (if item (:comments item) true))
+                   (label {:class "after-input"} :comments "Allow comments")]
+                  [:p
+                   (label :img "Image")
+                   (file-upload {:accept "image/*"} :img)]
+                  [:p.right (submit-button "Post")]
+                  [:div.clear])]))))
 
-(defn publish [user title body link file public comments]
-  (when-not (and (string/blank? title) (string/blank? body)(string/blank? link) (empty? (:filename file)))
+(defn publish [user id title body link file public comments]
+  (when-not (and (string/blank? title)
+                 (string/blank? body)
+                 (string/blank? link)
+                 (empty? (:filename file)))
     (try
-      (db/add-item {:user_id (:_id user)
-                    :image_id (image/save-image file user)
-                    :title (if (string/blank? title) nil title)
-                    :body (if (string/blank? body) nil body)
-                    :link (if (string/blank? link) nil link)
-                    :comments (boolean comments)
-                    :public (boolean public)})
+      (let [item-id (Integer/parseInt id)
+            user-id (:_id user)
+            item {:user_id user-id
+                  :title (if (string/blank? title) nil title)
+                  :body (if (string/blank? body) nil body)
+                  :link (if (string/blank? link) nil link)
+                  :comments (boolean comments)
+                  :public (boolean public)}]
+        (if item-id
+          ; edit
+          (when-let [current-item (db/get-item item-id user-id)]
+            (do
+              (db/update-item item-id (conj
+                                        item
+                                        {:image_id (if (empty? (:filename file))
+                                                     (:image_id current-item)
+                                                     (image/save-image file user))}))
+              (when (empty? (:filename file))
+                (db/delete-image (:image_id current-item) user-id))))
+          ; publish
+          (db/add-item (conj item {:image_id (image/save-image file user)}))))
       (catch Exception e
-        (println (str "error creating item: " (.getMessage e)))
+        (println (str "error " (if id "editing" "creating") " item: " (.getMessage e)))
         (.printStackTrace e))))
   (redirect (str "/u/" (:username user))))
 
@@ -124,11 +144,11 @@
             [:div.c "There's nothing here!"])
       (map item/format-item items))))
 
-(defn profile [logged-in-user username]
+(defn profile [logged-in-user username item-id]
   (if-let [user (db/find-user username (:_id logged-in-user))]
     (layout/common
       (profile-details logged-in-user user)
-      (profile-publish logged-in-user user)
+      (profile-publish logged-in-user user item-id)
       (profile-feed logged-in-user user))
     (redirect "/")))
 
@@ -192,12 +212,13 @@
 
 (defroutes user-routes
   (context "/u/:username" [username]
-    (GET "/" [] (profile (user/get-user) username))
+    (GET "/" [item] (profile (user/get-user) username item))
     (POST "/follow" [] (restricted (follow (user/get-user) username true)))
     (POST "/unfollow" [] (restricted (follow (user/get-user) username false)))
     (POST "/approve" [] (restricted (approve (user/get-user) username true)))
     (POST "/deny" [] (restricted (approve (user/get-user) username false))))
-  (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) title body link img public comments)))
+  (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) nil title body link img public comments)))
+  (POST "/edit/:id" [id title body link img public comments] (restricted (publish (user/get-user) id title body link img public comments)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user))))
   (GET "/followers/pending" [] (restricted (pending-followers (user/get-user))))
