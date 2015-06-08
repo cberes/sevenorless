@@ -198,9 +198,6 @@ div.item-extras {
   border: thin solid #000000;
   background: #E9E9E9;
 }
-img#portrait {
-  border-radius: 0.25em;
-}
 div.i h3 {
   color: #008584;
   font-size: 1.5em;
@@ -250,6 +247,10 @@ h2 {
 form label {
   padding-right: 1em;
 }
+form .left {
+  float: left;
+  margin: 0;
+}
 form .right {
   float: right;
   margin: 0;
@@ -282,6 +283,21 @@ img#portrait {
   float: left;
   width: 33%;
   max-width: 500px;
+  border-radius: 0.25em;
+}
+img#portrait-preview {
+  float: left;
+  width: 33%;
+  max-width: 200px;
+  border-radius: 0.25em;
+  margin-right: 1em;
+}
+img#item-preview {
+  float: left;
+  width: auto;
+  max-width: 33%;
+  max-height: 200px;
+  margin-right: 1em;
 }
 table#profile, div#profile-bio {
   float: right;

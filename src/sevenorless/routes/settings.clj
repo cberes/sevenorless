@@ -66,9 +66,11 @@
   (layout-settings-x "/settings" {:enctype "multipart/form-data"}
     [:div.c
      [:p (label :portrait "Change your portrait, or remove your portrait to use a default one.")]
+     (image {:id "portrait-preview"} (if-not (nil? (:image_id user)) (str "/img/" (:image_id user) "." (:image_ext user)) "/img/anon.png"))
      [:p (file-upload {:accept "image/*"} :portrait)]
      [:p (label :default-portrait "Use a default portrait") (check-box :default-portrait)]
-     [:p (on-error :portrait first)]]
+     [:p (on-error :portrait first)]
+     [:div.clear]]
     [:div.c
      [:p (label :bio "Enter a bio that will be displayed on your profile.")]
      [:p (text-area {:maxlength 512 :class "rich"} :bio (:bio (db/get-user-bio (:_id user))))]

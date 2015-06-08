@@ -61,7 +61,7 @@
    [:div.item-extras {:onclick "cancelHideItemExtras(this);"}
     [:h4 (str "Item " id)]
     [:p (str "Created " (format-time created))]
-    (when editable? [:p (link-to (str "/u/" username "?item=" id) "Edit item")])
+    (when editable? [:p (link-to (str "/u/" username "?item=" id "#publish") "Edit item")])
     (when editable? [:p (link-to {:onclick (str "return deleteItem(" id ", 'item-" id "', 'item-" id "-extras');")} "#" "Delete item")])]])
 
 (defn build-item [{:keys [_id user_id user_image_id user_image_ext username created body comments comments_count] :as item} user]

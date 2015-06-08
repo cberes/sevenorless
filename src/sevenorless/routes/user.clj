@@ -66,9 +66,9 @@
   (when (own-profile? logged-in-user user)
     (let [item (when item-id (db/get-item (Integer/parseInt item-id) (:_id user)))]
       (list
-        [:h2 (if item-id "Edit" "Publish")]
+        [:h2#publish (if item-id "Edit" "Publish")]
         [:div.c
-         [:p (post-count-message (:_id user))]
+         [:p (if item "You are editing an item." (post-count-message (:_id user)))]
          [:p "You can enter a title, body, link, and/or image. Each field is optional, but you need to enter at least one."]
          (form-to {:id "publish" :enctype "multipart/form-data"} [:post (if item-id (str "/edit/" item-id) "/publish")]
                   [:p
@@ -86,20 +86,30 @@
                    (label :link "Link")
                    [:br]
                    (text-field {:maxlength 2048} :link (:link item))]
-                  [:p.right
+                  (when (:image_id item)
+                    [:p.right
+                     (check-box :no-image false)
+                     (label {:class "after-input"} :no-image "Remove image")])
+                  [:p
+                   (label :img "Image")
+                   [:br]
+                   (when (:image_id item)
+                     (image {:id "item-preview"} (str "/img/" (:image_id item) "." (:image_ext item))))
+                   (file-upload {:accept "image/*"} :img)
+                   [:div.clear]]
+                  [:p.left
                    ; default checkbox to true
                    (check-box :public (if item (:public item) true))
                    (label {:class "after-input"} :public "Public")
                    ; default checkbox to true
                    (check-box :comments (if item (:comments item) true))
                    (label {:class "after-input"} :comments "Allow comments")]
-                  [:p
-                   (label :img "Image")
-                   (file-upload {:accept "image/*"} :img)]
-                  [:p.right (submit-button "Post")]
+                  [:p.right
+                   (submit-button (if item "Update" "Post"))
+                   (when item (link-to {:style "margin-left: 1em;"} (str "/u/" (:username user)) "Cancel"))]
                   [:div.clear])]))))
 
-(defn publish [user id title body link file public comments]
+(defn publish [user id title body link file public comments no-image]
   (when-not (and (string/blank? title)
                  (string/blank? body)
                  (string/blank? link)
@@ -119,10 +129,10 @@
             (do
               (db/update-item item-id (conj
                                         item
-                                        {:image_id (if (empty? (:filename file))
-                                                     (:image_id current-item)
-                                                     (image/save-image file user))}))
-              (when (empty? (:filename file))
+                                        {:image_id (if (seq (:filename file))
+                                                     (image/save-image file user)
+                                                     (when-not no-image (:image_id current-item)))}))
+              (when (or no-image (seq (:filename file)))
                 (db/delete-image (:image_id current-item) user-id))))
           ; publish
           (db/add-item (conj item {:image_id (image/save-image file user)}))))
@@ -217,8 +227,8 @@
     (POST "/unfollow" [] (restricted (follow (user/get-user) username false)))
     (POST "/approve" [] (restricted (approve (user/get-user) username true)))
     (POST "/deny" [] (restricted (approve (user/get-user) username false))))
-  (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) nil title body link img public comments)))
-  (POST "/edit/:id" [id title body link img public comments] (restricted (publish (user/get-user) id title body link img public comments)))
+  (POST "/publish" [title body link img public comments] (restricted (publish (user/get-user) nil title body link img public comments false)))
+  (POST "/edit/:id" [id title body link img public comments no-image] (restricted (publish (user/get-user) id title body link img public comments no-image)))
   (GET "/feed" [] (restricted (feed (user/get-user))))
   (GET "/following" [] (restricted (following (user/get-user))))
   (GET "/followers/pending" [] (restricted (pending-followers (user/get-user))))
