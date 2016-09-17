@@ -45,7 +45,6 @@
       (handler/site)
       (wrap-base-url)
       (wrap-access-rules [user-access])
-      (wrap-noir-validation)
       (user/wrap-user-login)
       (session/wrap-noir-session {:store (memory-store)})
       (cookies/wrap-noir-cookies)))
