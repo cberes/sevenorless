@@ -57,12 +57,12 @@
     [:p.tags tags]))
 
 (defn build-extras [id created username editable?]
-  [:div.item-extras-w {:id (str "item-" id "-extras") :style "display:none;" :onclick "hideItemExtras(this);"}
-   [:div.item-extras {:onclick "cancelHideItemExtras(this);"}
+  [:div.item-extras-w {:id (str "item-" id "-extras")}
+   [:div.item-extras
     [:h4 (str "Item " id)]
     [:p (str "Created " (format-time created))]
     (when editable? [:p (link-to (str "/u/" username "?item=" id "#publish") "Edit item")])
-    (when editable? [:p (link-to {:onclick (str "return deleteItem(" id ", 'item-" id "', 'item-" id "-extras');")} "#" "Delete item")])]])
+    (when editable? [:p (link-to {:class "delete-item-link" :data-item-id id} "#" "Delete item")])]])
 
 (defn build-item [{:keys [_id user_id user_image_id user_image_ext username created body comments comments_count] :as item} user]
   [:div.i {:id (str "item-" _id)}
@@ -79,7 +79,7 @@
     [:div.a
      (link-to (str "/u/" username) (build-user-icon user_image_id user_image_ext))
      [:strong (link-to (str "/u/" username) username)]
-     [:span.item-extra {:onclick (str "return showItemExtras('item-" _id "-extras');")} "+"]
+     [:span.item-extra {:data-item-id _id} "+"]
      [:span.item-time (format-time created)]]]])
 
 (defn format-item [item]

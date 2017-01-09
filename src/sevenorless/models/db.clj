@@ -246,7 +246,7 @@
 (defn get-item [id user-id]
   (sql/query @db
     ["select i.*, img.ext as image_ext from item i
-      join image img on i.image_id = img._id
+      left outer join image img on i.image_id = img._id
       where i._id = ? and i.user_id = ?" id user-id]
     :result-set-fn first))
 
