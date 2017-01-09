@@ -11,7 +11,8 @@
                  [clj-http "1.1.2"]
                  [org.clojure/data.json "0.2.6"]
                  [buddy/buddy-hashers "1.1.0"]
-                 [com.drewnoakes/metadata-extractor "2.9.1"]]
+                 [com.drewnoakes/metadata-extractor "2.9.1"]
+                 [com.amazonaws/aws-java-sdk "1.11.76"]]
   :plugins [[lein-ring "0.9.6"]]
   :ring {:handler sevenorless.handler/app}
   :profiles {

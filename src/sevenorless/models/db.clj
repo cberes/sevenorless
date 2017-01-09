@@ -91,6 +91,16 @@
       (update-user id {:activated (quot (System/currentTimeMillis) 1000)})
       (get-user id))))
 
+(defn update-verify-email [id status]
+  (sql/update! @db :user_email_verify {:status status} ["user_id = ?" id]))
+
+(defn get-verify-emails-to-send []
+  (sql/query @db
+    ["select v.*, u.email from user_email_verify v
+      join web_user u on u._id = v.user_id
+      where v.status = '0'"]
+    :result-set-fn doall))
+
 (defn update-user-email [id email]
   (sql/update! @db :web_user {:email email :activated nil} ["_id = ?" id])
   (create-email-verify-record (get-user id)))
@@ -109,6 +119,16 @@
 (defn get-password-reset-user [secret]
   (let [{id 0, token 1} (str/split secret #":" 2) id (Integer/parseInt id)]
     (when (compare-user-password-reset id token) (get-user id))))
+
+(defn update-password-reset [id status]
+  (sql/update! @db :user_password_reset {:status status} ["user_id = ?" id]))
+
+(defn get-password-resets-to-send [f]
+  (sql/query @db
+    ["select r.*, u.email from user_password_reset r
+      join web_user u on u._id = r.user_id
+      where r.status = '0'"]
+    :result-set-fn doall))
 
 ;; returns cookie value
 (defn remember-user [user]
