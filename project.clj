@@ -10,6 +10,7 @@
                  [org.clojure/java.jdbc "0.4.2"]
                  [clj-http "1.1.2"]
                  [org.clojure/data.json "0.2.6"]
+                 [org.clojure/data.codec "0.1.0"]
                  [buddy/buddy-hashers "1.1.0"]
                  [com.drewnoakes/metadata-extractor "2.9.1"]
                  [com.amazonaws/aws-java-sdk "1.11.76"]]

@@ -1,4 +1,5 @@
 (ns sevenorless.emailer
+  (:gen-class)
   (:import [com.amazonaws.services.simpleemail AmazonSimpleEmailServiceClient]
            [com.amazonaws.services.simpleemail.model Body
                                                      Content
@@ -6,7 +7,8 @@
                                                      SendEmailRequest]
            [com.amazonaws.regions Region
                                   Regions])
-  (:require [sevenorless.models.db :as db]))
+  (:require [sevenorless.models.db :as db]
+            [clojure.data.codec.base64 :as b64]))
 
 (def title "7 Items or Less")
 
@@ -38,10 +40,13 @@
     (.setRegion (Region/getRegion Regions/US_EAST_1))
     (.sendEmail (build-email from to subject body))))
 
+(defn build-token [{id :user_id token :token}]
+  (String. (b64/encode (.getBytes (str id ":" token))) "UTF-8"))
+
 (defn build-verification-email-body [record]
   (str "Thank you for joining " title "!" \newline \newline
        "Please verify your email by clicking the link below:" \newline
-       base-url "/verify-email?q=" (:user_id record) ":" (:token record) \newline \newline
+       @base-url "/verify-email?q=" (build-token record) \newline \newline
        "Enjoy " title "!"))
 
 (defn send-verification-email [record]
@@ -61,7 +66,7 @@
   (str "We received your request to change your password for " title "." \newline
        "If you did not request this, then please ignore this message." \newline \newline
        "To change your password, please click the link below:" \newline
-       base-url "/password-reset?q=" (:user_id record) ":" (:token record) \newline \newline
+       @base-url "/password-reset?q=" (build-token record) \newline \newline
        "Enjoy " title "!"))
 
 (defn send-password-reset [record]
@@ -77,6 +82,6 @@
       (db/update-password-reset id "P")
     (catch Exception e (db/update-password-reset id "F")))))
 
-(defn send-emails []
+(defn -main [& args]
   (send-verification-emails)
   (send-password-reset-emails))

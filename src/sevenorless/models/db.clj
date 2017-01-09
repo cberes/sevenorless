@@ -1,7 +1,8 @@
 (ns sevenorless.models.db
   (:require [clojure.java.jdbc :as sql]
             [buddy.hashers :as crypt]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [clojure.data.codec.base64 :as b64])
   (:import java.sql.DriverManager))
 
 (def db
@@ -9,6 +10,9 @@
           :subname (System/getenv "SIOL_DB_NAME")
           :user (System/getenv "SIOL_DB_USER")
           :password (System/getenv "SIOL_DB_PASS")}))
+
+(defn current-time []
+  (.format (java.time.format.DateTimeFormatter/ISO_DATE_TIME) (java.time.LocalDateTime/now)))
 
 ;; TODO function in clojure to generate random string?
 (def alphanumeric "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -67,13 +71,13 @@
       :result-set-fn first))))
 
 (defn compare-user-password-reset [id token]
-  (crypt/check token (:token
+  (= token (:token
     (sql/query @db
       ["select token from user_password_reset where user_id = ? and created >= (NOW() - INTERVAL '2 weeks') limit 1" id]
       :result-set-fn first))))
 
 (defn compare-user-email-verify [id token]
-  (crypt/check token (:token
+  (= token (:token
     (sql/query @db
       ["select token from user_email_verify where user_id = ? limit 1" id]
       :result-set-fn first))))
@@ -84,11 +88,19 @@
     (sql/insert! @db :user_email_verify {:user_id id :token (crypt/encrypt token)})
     id))
 
+(defn parse-token [s]
+  (let [[id token] (-> s
+                     (.getBytes)
+                     (b64/decode)
+                     (String. "UTF-8")
+                     (str/split #":" 2))]
+    [(Integer/parseInt id) token]))
+
 (defn verify-email [secret]
-  (let [{id 0, token 1} (str/split secret #":" 2) id (Integer/parseInt id)]
+  (let [[id token] (parse-token secret)]
     (when (compare-user-email-verify id token)
       (sql/delete! @db :user_email_verify ["user_id = ?" id])
-      (update-user id {:activated (quot (System/currentTimeMillis) 1000)})
+      (update-user id {:activated (current-time)})
       (get-user id))))
 
 (defn update-verify-email [id status]
@@ -117,13 +129,13 @@
 ;; returns the remembered user (or nil)
 ;; do not call if user is in session
 (defn get-password-reset-user [secret]
-  (let [{id 0, token 1} (str/split secret #":" 2) id (Integer/parseInt id)]
+  (let [[id token] (parse-token secret)]
     (when (compare-user-password-reset id token) (get-user id))))
 
 (defn update-password-reset [id status]
   (sql/update! @db :user_password_reset {:status status} ["user_id = ?" id]))
 
-(defn get-password-resets-to-send [f]
+(defn get-password-resets-to-send []
   (sql/query @db
     ["select r.*, u.email from user_password_reset r
       join web_user u on u._id = r.user_id
