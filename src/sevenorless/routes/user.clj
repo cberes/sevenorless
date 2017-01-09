@@ -20,7 +20,7 @@
   (.format (java.text.SimpleDateFormat. "MMMM dd, yyyy") date))
 
 (defn follow-link [username following?]
-  (link-to {:id "follow" :onclick (str "follow(this,'" username "');")} "#" (if following? "Unfollow" "Follow")))
+  (link-to {:id "follow" :data-username username} "#" (if following? "Unfollow" "Follow")))
 
 (defn details-follow-link [logged-in-user user]
   (if (and (not (nil? logged-in-user)) (not= (:_id user) (:_id logged-in-user)))
@@ -182,8 +182,8 @@
   (let [username (:username f)]
     [:tr [:td (link-to (str "/u/" username) username)]
          [:td {:style "text-align: right;"} (str "Since " (format-date (:created f)))]
-         [:td (link-to {:id "approve" :onclick (str "approve(this,'" username "');")} "#" "Approve")]
-         [:td (link-to {:id "deny" :onclick (str "deny(this,'" username "');")} "#" "Deny")]]))
+         [:td (link-to {:id "approve" :data-username username} "#" "Approve")]
+         [:td (link-to {:id "deny" :data-username username} "#" "Deny")]]))
 
 (defn following [user]
   (let [title "Following" records (db/get-follows (:_id user))]
