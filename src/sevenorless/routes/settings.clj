@@ -75,7 +75,7 @@
      [:p (label :bio "Enter a bio that will be displayed on your profile.")]
      [:p (text-area {:maxlength 512 :class "rich"} :bio (:bio (db/get-user-bio (:_id user))))]
      [:p.right (label :raw "Raw HTML editor")
-               (check-box {:onchange "toggleTinyMce(this, 'bio');"} :raw)]
+               (check-box {:class "tinymce-toggle" :data-editor-id "bio"} :raw)]
      [:p (on-error :bio first)]
      [:div.clear ]]))
 
@@ -105,7 +105,7 @@
   ; update user
   (when-not (errors? :username :email :pass :pass1 :old-pass :timezone)
     (when-not (string/blank? email)
-      (user/send-verify-email user (db/update-user-email (:_id user) email)))
+      (db/update-user-email (:_id user) email))
     (when-let [updates (conj {:tz timezone}
                              (when-not (string/blank? username) {:username username})
                              (when-not (string/blank? pass) {:password (crypt/encrypt pass)}))]

@@ -6,29 +6,20 @@
             [ring.middleware.file-info :refer [wrap-file-info]]
             [ring.middleware.session.memory :refer [memory-store]]
             [hiccup.middleware :refer [wrap-base-url]]
-            [noir.cookies :as cookies]
-            [noir.session :as session]
+            [noir.cookies :refer [wrap-noir-cookies]]
+            [noir.session :refer [wrap-noir-session]]
             [noir.util.middleware :refer [wrap-access-rules]]
             [noir.validation :refer [wrap-noir-validation]]
-            [sevenorless.models.db :as db]
-            [sevenorless.models.user :as user]
+            [sevenorless.models.user :refer [wrap-user-login get-user]]
             [sevenorless.routes.auth :refer [auth-routes]]
             [sevenorless.routes.file :refer [file-routes]]
             [sevenorless.routes.home :refer [home-routes]]
             [sevenorless.routes.policy :refer [policy-routes]]
             [sevenorless.routes.settings :refer [settings-routes]]
-            [sevenorless.routes.user :refer [user-routes]]
-            [sevenorless.util.settings :refer [load-properties]]))
-
-(defn init []
-  (load-properties)
-  (println "sevenorless is starting"))
-
-(defn destroy []
-  (println "sevenorless is shutting down"))
+            [sevenorless.routes.user :refer [user-routes]]))
 
 (defn user-access [_]
-  (user/get-user))
+  (get-user))
 
 (defroutes app-routes
   (route/resources "/")
@@ -45,6 +36,7 @@
       (handler/site)
       (wrap-base-url)
       (wrap-access-rules [user-access])
-      (user/wrap-user-login)
-      (session/wrap-noir-session {:store (memory-store)})
-      (cookies/wrap-noir-cookies)))
+      (wrap-user-login)
+      (wrap-noir-session {:store (memory-store)})
+      (wrap-noir-cookies)
+      (wrap-noir-validation)))

@@ -21,14 +21,6 @@
           (reset! current-user nil)))
     (handler request)))
 
-;; TODO
-(defn send-password-reset-email [user token]
-  (println user token))
-
-;; TODO
-(defn send-verify-email [user token]
-  (println user token))
-
 (defn validate-password [pass pass1]
   (rule (has-value? pass)
         [:pass "password is required"])
@@ -40,8 +32,6 @@
         [:username "username must be between 4 and 25 characters long"])
   (rule (or (not (has-value? username)) (matches-regex? username #"^[-a-zA-Z0-9]+$"))
         [:username "username can have only letters, digits, and dashes"])
-;  (rule (or (not (has-value? username)) (matches-regex? username #"[a-zA-Z]"))
-;        [:username "username must have at least one letter"])
   (rule (or (not (has-value? username)) (matches-regex? username #"^[^-].+[^-]$"))
         [:username "username cannot begin or end with a dash"])
   (rule (or (errors?) (not (has-value? username)) (not (db/check-for-user username id)))

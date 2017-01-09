@@ -1,16 +1,14 @@
 (ns sevenorless.models.db
-  (:import com.mchange.v2.c3p0.ComboPooledDataSource)
   (:require [clojure.java.jdbc :as sql]
-            [jdbc.pool.c3p0 :as pool]
             [buddy.hashers :as crypt]
             [clojure.string :as str])
   (:import java.sql.DriverManager))
 
-(def db (delay (pool/make-datasource-spec
-                 {:subprotocol "postgresql"
-                  :subname (System/getProperty "db.name")
-                  :user (System/getProperty "db.user")
-                  :password (System/getProperty "db.pass")})))
+(def db
+  (delay {:subprotocol "postgresql"
+          :subname (System/getenv "SIOL_DB_NAME")
+          :user (System/getenv "SIOL_DB_USER")
+          :password (System/getenv "SIOL_DB_PASS")}))
 
 ;; TODO function in clojure to generate random string?
 (def alphanumeric "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -84,7 +82,7 @@
   (let [id (:_id user) token (get-random-id 32)]
     (sql/delete! @db :user_email_verify ["user_id = ?" id])
     (sql/insert! @db :user_email_verify {:user_id id :token (crypt/encrypt token)})
-    (str id ":" token)))
+    id))
 
 (defn verify-email [secret]
   (let [{id 0, token 1} (str/split secret #":" 2) id (Integer/parseInt id)]
@@ -104,7 +102,7 @@
   (delete-password-reset-record user)
   (let [id (:_id user) token (get-random-id 32)]
     (sql/insert! @db :user_password_reset {:user_id id :token (crypt/encrypt token)})
-    (str id ":" token)))
+    id))
 
 ;; returns the remembered user (or nil)
 ;; do not call if user is in session

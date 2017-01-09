@@ -15,7 +15,7 @@
            com.drew.metadata.jpeg.JpegDirectory))
 
 (def default-image-store-path
-  (delay (System/getProperty "image.store.path")))
+  (delay (System/getenv "SIOL_IMAGE_STORE_PATH")))
 
 (defn image-store-path []
   @default-image-store-path)

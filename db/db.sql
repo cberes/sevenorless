@@ -1,18 +1,10 @@
--- https://wiki.postgresql.org/wiki/YUM_Installation
--- psql: postgres
--- kilgore rumfoord
-DROP TABLE item;
-DROP TABLE user_email_verify;
-DROP TABLE user_password_reset;
-DROP TABLE user_portrait;
-DROP TABLE user_privacy;
-DROP TABLE user_token;
-DROP TABLE web_user;
-
-ALTER TABLE web_user ALTER COLUMN password TYPE varchar(200);
-ALTER TABLE user_token ALTER COLUMN token TYPE varchar(200);
-ALTER TABLE user_password_reset ALTER COLUMN token TYPE varchar(200);
-ALTER TABLE user_email_verify ALTER COLUMN token TYPE varchar(200);
+DROP TABLE IF EXISTS item;
+DROP TABLE IF EXISTS user_email_verify;
+DROP TABLE IF EXISTS user_password_reset;
+DROP TABLE IF EXISTS user_portrait;
+DROP TABLE IF EXISTS user_privacy;
+DROP TABLE IF EXISTS user_token;
+DROP TABLE IF EXISTS web_user;
 
 CREATE TABLE IF NOT EXISTS web_user (
 _id BIGSERIAL PRIMARY KEY
@@ -24,10 +16,12 @@ _id BIGSERIAL PRIMARY KEY
 ,activated timestamp
 ,deactivated timestamp
 );
-INSERT INTO web_user (username, password, email) VALUES
+INSERT INTO web_user (username, password, email, tz) VALUES
     ('admin', 'x', 'admin@7itemsorless.com', 'America/New_York'),
     ('help', 'x', 'help@7itemsorless.com', 'America/New_York'),
     ('info', 'x', 'info@7itemsorless.com', 'America/New_York'),
+    ('faq', 'x', 'faq@7itemsorless.com', 'America/New_York'),
+    ('about', 'x', 'about@7itemsorless.com', 'America/New_York'),
     ('7itemsorless', 'x', '7itemsorless@7itemsorless.com', 'America/New_York'),
     ('sevenitemsorless', 'x', 'sevenitemsorless@7itemsorless.com', 'America/New_York');
 
@@ -50,12 +44,14 @@ CREATE TABLE IF NOT EXISTS user_token (
 CREATE TABLE IF NOT EXISTS user_password_reset (
  user_id bigint PRIMARY KEY references web_user(_id)
 ,token varchar(200) NOT NULL
+,status varchar(1) NOT NULL DEFAULT '0'
 ,created timestamp DEFAULT current_timestamp
 );
 
 CREATE TABLE IF NOT EXISTS user_email_verify (
  user_id bigint PRIMARY KEY references web_user(_id)
 ,token varchar(200) NOT NULL
+,status varchar(1) NOT NULL DEFAULT '0'
 ,created timestamp DEFAULT current_timestamp
 );
 

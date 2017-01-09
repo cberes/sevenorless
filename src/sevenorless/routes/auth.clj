@@ -20,6 +20,9 @@
 ;; Default timezone
 (def default-tz "America/New_York")
 
+(def use-captcha?
+  (delay (Boolean/parseBoolean (System/getenv "SIOL_USE_CAPTCHA"))))
+
 (defn control [field name text & [attrs]]
   (list [:tr
          [:th (label name text)]
@@ -37,7 +40,7 @@
               [:tr
                [:th " "]
                [:td
-                [:div.g-recaptcha {:data-sitekey "6LeHigMTAAAAAGQUrmT1Yj-VYzXwyyHVKlM0r8NQ"}]]
+                (when @use-captcha? [:div.g-recaptcha {:data-sitekey "6LeHigMTAAAAAGQUrmT1Yj-VYzXwyyHVKlM0r8NQ"}])]
                [:td.error {:colspan 2} (on-error :captcha first)]]
               [:td {:colspan 3} "By creating an account, you acknowledge that you have read and agree to our "
                                 (link-to "/policy" "terms of service")
@@ -90,7 +93,7 @@
   (if (errors? :id)
     (forgot-password-page)
     (do
-      (user/send-password-reset-email user (db/create-password-reset-record user))
+      (db/create-password-reset-record user)
       (layout/simple "Password reset" [:p "We've sent an email to you to let you reset your password."]))))
 
 (defn handle-password-reset-request [id]
@@ -106,9 +109,10 @@
      :accept :json}))
 
 (defn human? [response remoteip]
-  (try
-    (:success (json/read-str (:body (send-captcha-request response remoteip)) :key-fn keyword))
-    (catch Exception e (prn "caught" e))))
+  (or (not @use-captcha?)
+      (try
+        (:success (json/read-str (:body (send-captcha-request response remoteip)) :key-fn keyword))
+        (catch Exception e (prn "caught" e)))))
 
 (defn handle-registration [username email pass pass1 g-recaptcha-response remoteip]
   (rule (has-value? username) [:username "username is required"])
@@ -123,7 +127,7 @@
       (db/add-user {:username username :email email :password (crypt/encrypt pass) :tz default-tz})
       ; TODO kind of stupid that we have to query for the user right away
       (let [user (db/find-user username)]
-        (user/send-verify-email user (db/create-email-verify-record user))
+        (db/create-email-verify-record user)
         (session/put! :user (:_id user))
         (redirect (str "/u/" username))))))
 

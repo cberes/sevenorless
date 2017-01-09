@@ -46,7 +46,7 @@
   (when allow-comments?
     (if (nil? user)
       [:p "Login to add comments."]
-      (form-to {:onsubmit (str "return addComment(" id ", 'comments-" id "', this);")} [:post (str "/comments/" id)]
+      (form-to {:class "comment" :data-item-id id} [:post (str "/comments/" id)]
                [:table.add-comment
                 [:tr
                  [:td (text-area {:maxlength 4096 :placeholder "comment"} :comment)]
@@ -70,7 +70,7 @@
    (build-image item)
    (build-body (build-title item) body)
    [:div.u
-    [:div.m {:onclick (str "toggleComments(" _id ", 'comments-" _id "');")}
+    [:div.m {:data-item-id _id}
      [:span.tag-count "0 tags"] (str comments_count " comment" (if (= 1 comments_count) "" "s"))]
     [:div.f {:id (str "comments-" _id) :style "display: none;"}
      (build-tags nil)

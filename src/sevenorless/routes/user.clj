@@ -77,7 +77,7 @@
                    (text-field {:maxlength 256} :title (:title item))]
                   [:p.right
                    (label :raw "Raw HTML editor")
-                   (check-box {:onchange "toggleTinyMce(this, 'body');"} :raw)]
+                   (check-box {:class "tinymce-toggle" :data-editor-id "body"} :raw)]
                   [:p
                    (label :body "Body")
                    [:br]
