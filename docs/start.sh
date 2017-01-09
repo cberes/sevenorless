@@ -1,7 +1,9 @@
-NAME=sevenorless
-BASEDIR=/opt/$NAME
-LOGFILE=/var/log/$NAME.log
-export PORT=8081
+#!/usr/bin/env bash
+readonly name=sevenorless
+readonly basedir=/opt/$name
+readonly logfile=/var/log/$name.log
+. $basedir/$name.conf
 
-nohup java -Dsite.config=$BASEDIR/$NAME.conf -jar $BASEDIR/$NAME.jar >$LOGFILE 2>&1 &
+nohup java -jar $basedir/$name.jar >$logfile 2>&1 &
 echo $! > $1
+

@@ -10,14 +10,13 @@
 
 . /etc/init.d/functions
 
-prog=sevenorless
-runas=sevenorless
-
-pidfile=/var/run/$prog.pid
-lockfile=/var/lock/subsys/$prog
+readonly runas=sevenorless
+readonly prog=sevenorless
+readonly pidfile=/var/run/$prog.pid
+readonly lockfile=/var/lock/subsys/$prog
 
 start() {
-  echo -n $"Starting $prog: "
+  echo -n "Starting $prog: "
   pidfile_temp=$(sudo -u $runas mktemp)
   daemon --check $prog --user $runas --pidfile $pidfile /opt/$prog/start.sh $pidfile_temp
   RETVAL=$?
@@ -28,7 +27,7 @@ start() {
 }
 
 stop() {
-  echo -n $"Shutting down $prog: "
+  echo -n "Shutting down $prog: "
   killproc -p $pidfile $prog
   RETVAL=$?
   echo
