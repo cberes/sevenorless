@@ -3,7 +3,8 @@
             [buddy.hashers :as crypt]
             [clojure.string :as str]
             [clojure.data.codec.base64 :as b64])
-  (:import java.sql.DriverManager))
+  (:import java.sql.DriverManager
+           java.sql.Timestamp))
 
 (def db
   (delay {:subprotocol "postgresql"
@@ -12,7 +13,7 @@
           :password (System/getenv "SIOL_DB_PASS")}))
 
 (defn current-time []
-  (.format (java.time.format.DateTimeFormatter/ISO_DATE_TIME) (java.time.LocalDateTime/now)))
+  (Timestamp. (System/currentTimeMillis)))
 
 ;; TODO function in clojure to generate random string?
 (def alphanumeric "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -99,8 +100,8 @@
 (defn verify-email [secret]
   (let [[id token] (parse-token secret)]
     (when (compare-user-email-verify id token)
-      (sql/delete! @db :user_email_verify ["user_id = ?" id])
       (update-user id {:activated (current-time)})
+      (sql/delete! @db :user_email_verify ["user_id = ?" id])
       (get-user id))))
 
 (defn update-verify-email [id status]
