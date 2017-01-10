@@ -3,6 +3,7 @@
   (:import [com.amazonaws.services.simpleemail AmazonSimpleEmailServiceClient]
            [com.amazonaws.services.simpleemail.model Body
                                                      Content
+                                                     Destination
                                                      Message
                                                      SendEmailRequest]
            [com.amazonaws.regions Region
@@ -29,10 +30,13 @@
     (.withSubject (build-data subject))
     (.withBody (build-body (build-data body)))))
 
+(defn #^Destination build-destination [to]
+  (.withToAddresses (Destination.) (into-array String [(str to)])))
+
 (defn #^SendEmailRequest build-email [from to subject body]
   (doto (SendEmailRequest.)
     (.withSource from)
-    (.withDestination to)
+    (.withDestination (build-destination to))
     (.withMessage (build-message subject body))))
 
 (defn #^AmazonSimpleEmailServiceClient send-email [from to subject body]
@@ -60,7 +64,9 @@
     (try
       (send-verification-email record)
       (db/update-verify-email id "P")
-    (catch Exception e (db/update-verify-email id "F")))))
+    (catch Exception e
+      (.printStackTrace e)
+      (db/update-verify-email id "F")))))
 
 (defn build-password-reset-body [record]
   (str "We received your request to change your password for " title "." \newline
@@ -80,7 +86,9 @@
     (try
       (send-password-reset record)
       (db/update-password-reset id "P")
-    (catch Exception e (db/update-password-reset id "F")))))
+    (catch Exception e
+      (.printStackTrace e)
+      (db/update-password-reset id "F")))))
 
 (defn -main [& args]
   (send-verification-emails)
