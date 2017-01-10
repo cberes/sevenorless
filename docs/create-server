@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+sudo useradd -rmU -b /opt sevenorless
+sudo -u sevenorless mkdir /opt/sevenorless/user-images
+sudo -u sevenorless mkdir /opt/sevenorless/
+sudo touch /var/log/sevenorless.log
+sudo touch /var/log/sevenorless-email.log
+sudo chown sevenorless:sevenorless /var/log/sevenorless.log
+sudo chown sevenorless:sevenorless /var/log/sevenorless-email.log
+sudo vim /etc/init.d/sevenorless
+sudo chmod u+x /etc/init.d/sevenorless
+sudo update-rc.d sevenorless defaults
+
