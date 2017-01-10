@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [clojure.data.codec.base64 :as b64])
   (:import java.sql.DriverManager
-           java.sql.Timestamp))
+           java.sql.Timestamp
+           java.util.UUID))
 
 (def db
   (delay {:subprotocol "postgresql"
@@ -14,6 +15,9 @@
 
 (defn current-time []
   (Timestamp. (System/currentTimeMillis)))
+
+(defn email-token []
+  (.toString (UUID/randomUUID)))
 
 ;; TODO function in clojure to generate random string?
 (def alphanumeric "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -83,11 +87,10 @@
       ["select token from user_email_verify where user_id = ? limit 1" id]
       :result-set-fn first))))
 
-(defn create-email-verify-record [user]
-  (let [id (:_id user) token (get-random-id 32)]
-    (sql/delete! @db :user_email_verify ["user_id = ?" id])
-    (sql/insert! @db :user_email_verify {:user_id id :token (crypt/encrypt token)})
-    id))
+(defn create-email-verify-record [{id :_id}]
+  (sql/delete! @db :user_email_verify ["user_id = ?" id])
+  (sql/insert! @db :user_email_verify {:user_id id :token (email-token)})
+  id)
 
 (defn parse-token [s]
   (let [[id token] (-> s
@@ -123,8 +126,8 @@
 
 (defn create-password-reset-record [user]
   (delete-password-reset-record user)
-  (let [id (:_id user) token (get-random-id 32)]
-    (sql/insert! @db :user_password_reset {:user_id id :token (crypt/encrypt token)})
+  (let [id (:_id user)]
+    (sql/insert! @db :user_password_reset {:user_id id :token (email-token)})
     id))
 
 ;; returns the remembered user (or nil)
